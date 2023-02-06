@@ -1,0 +1,416 @@
+definitions:
+  api.API_META_STATUS:
+    properties:
+      meta_message:
+        type: string
+      meta_status:
+        type: integer
+    type: object
+  api.DBKV:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  api.MSG_REQ_create_user:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+    type: object
+  api.MSG_REQ_search_user:
+    properties:
+      filter:
+        $ref: '#/definitions/api.MSG_REQ_search_user_Filter'
+      limit:
+        description: required
+        type: integer
+      offset:
+        description: required
+        type: integer
+    type: object
+  api.MSG_REQ_search_user_Filter:
+    properties:
+      email:
+        description: optional  email can be like condition e.g " LIKE `%jack%` "
+        type: string
+      id:
+        description: 'sql : id in (...) //optional'
+        items:
+          type: integer
+        type: array
+      name:
+        description: optional
+        type: string
+    type: object
+  api.MSG_REQ_update_user:
+    properties:
+      filter:
+        $ref: '#/definitions/api.MSG_REQ_update_user_Filter'
+      update:
+        $ref: '#/definitions/api.Msg_Req_update_user_to'
+    type: object
+  api.MSG_REQ_update_user_Filter:
+    properties:
+      id:
+        items:
+          type: integer
+        type: array
+    type: object
+  api.MSG_RESP_HEALTH:
+    properties:
+      unixtime:
+        type: integer
+    type: object
+  api.MSG_RESP_create_user:
+    properties:
+      meta_message:
+        type: string
+      meta_status:
+        type: integer
+      user:
+        $ref: '#/definitions/api.MSG_user'
+    type: object
+  api.MSG_RESP_search_user:
+    properties:
+      meta_message:
+        type: string
+      meta_status:
+        type: integer
+      result:
+        items:
+          $ref: '#/definitions/api.MSG_user'
+        type: array
+    type: object
+  api.MSG_user:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  api.Msg_Req_CreateKv:
+    description: Msg_Req_CreateRule
+    properties:
+      description:
+        description: required
+        type: string
+      key:
+        description: required
+        type: string
+      value:
+        description: required
+        type: string
+    type: object
+  api.Msg_Req_DeleteKv:
+    description: Msg_Req_DeleteKv
+    properties:
+      filter:
+        allOf:
+        - $ref: '#/definitions/api.Msg_Req_DeleteKv_Filter'
+        description: required
+    type: object
+  api.Msg_Req_DeleteKv_Filter:
+    description: Msg_Req_DeleteKv_Filter
+    properties:
+      keys:
+        description: required
+        items:
+          type: string
+        type: array
+    type: object
+  api.Msg_Req_QueryKv:
+    description: Msg_Req_QueryKv
+    properties:
+      filter:
+        allOf:
+        - $ref: '#/definitions/api.Msg_Req_QueryKv_Filter'
+        description: required
+    type: object
+  api.Msg_Req_QueryKv_Filter:
+    description: Msg_Req_QueryKv_Filter
+    properties:
+      keys:
+        description: optional
+        items:
+          type: string
+        type: array
+    type: object
+  api.Msg_Req_UpdateKv:
+    description: Msg_Req_UpdateKv
+    properties:
+      filter:
+        allOf:
+        - $ref: '#/definitions/api.Msg_Req_UpdateKv_Filter'
+        description: required
+      update:
+        allOf:
+        - $ref: '#/definitions/api.Msg_Req_UpdateKv_To'
+        description: required
+    type: object
+  api.Msg_Req_UpdateKv_Filter:
+    description: Msg_Req_UpdateKv_Filter
+    properties:
+      key:
+        description: required
+        type: string
+    type: object
+  api.Msg_Req_UpdateKv_To:
+    description: Msg_Req_UpdateKv_To
+    properties:
+      description:
+        description: required
+        type: string
+      value:
+        description: required
+        type: string
+    type: object
+  api.Msg_Req_update_user_to:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+  api.Msg_Resp_Captcha:
+    properties:
+      content:
+        type: string
+      id:
+        type: string
+      meta_message:
+        type: string
+      meta_status:
+        type: integer
+    type: object
+  api.Msg_Resp_QueryKv:
+    properties:
+      count:
+        type: integer
+      kv:
+        items:
+          $ref: '#/definitions/api.DBKV'
+        type: array
+      meta_message:
+        type: string
+      meta_status:
+        type: integer
+    type: object
+info:
+  contact:
+    email: contact@domain.com
+    name: Support
+    url: https://domain.com
+  description: api example
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://domain.com
+  title: api example
+  version: "1.0"
+paths:
+  /api/captcha:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: result
+          schema:
+            $ref: '#/definitions/api.Msg_Resp_Captcha'
+      summary: get captcha
+      tags:
+      - captcha
+  /api/health:
+    get:
+      description: health check
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: server unix time
+          schema:
+            $ref: '#/definitions/api.MSG_RESP_HEALTH'
+      summary: /api/health
+      tags:
+      - health
+  /api/kv/create:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: creat key value pair
+        in: body
+        name: msg
+        required: true
+        schema:
+          $ref: '#/definitions/api.Msg_Req_CreateKv'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: result
+          schema:
+            $ref: '#/definitions/api.API_META_STATUS'
+      security:
+      - ApiKeyAuth: []
+      summary: creat key value pair
+      tags:
+      - kv
+  /api/kv/delete:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: delete key value pair
+        in: body
+        name: msg
+        required: true
+        schema:
+          $ref: '#/definitions/api.Msg_Req_DeleteKv'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: result
+          schema:
+            $ref: '#/definitions/api.API_META_STATUS'
+      security:
+      - ApiKeyAuth: []
+      summary: delete key value pair
+      tags:
+      - kv
+  /api/kv/query:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: query key value pair
+        in: body
+        name: msg
+        required: true
+        schema:
+          $ref: '#/definitions/api.Msg_Req_QueryKv'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: result
+          schema:
+            $ref: '#/definitions/api.Msg_Resp_QueryKv'
+      security:
+      - ApiKeyAuth: []
+      summary: query key value pair
+      tags:
+      - kv
+  /api/kv/update:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: update key value pair
+        in: body
+        name: msg
+        required: true
+        schema:
+          $ref: '#/definitions/api.Msg_Req_UpdateKv'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: result
+          schema:
+            $ref: '#/definitions/api.API_META_STATUS'
+      security:
+      - ApiKeyAuth: []
+      summary: update key value pair
+      tags:
+      - kv
+  /api/user/create:
+    post:
+      consumes:
+      - application/json
+      description: creat user
+      parameters:
+      - description: new user info
+        in: body
+        name: msg
+        required: true
+        schema:
+          $ref: '#/definitions/api.MSG_REQ_create_user'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: result
+          schema:
+            $ref: '#/definitions/api.MSG_RESP_create_user'
+      security:
+      - ApiKeyAuth: []
+      summary: creat user
+      tags:
+      - user
+  /api/user/search:
+    post:
+      description: search user
+      parameters:
+      - description: user search param
+        in: body
+        name: msg
+        required: true
+        schema:
+          $ref: '#/definitions/api.MSG_REQ_search_user'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: result
+          schema:
+            $ref: '#/definitions/api.MSG_RESP_search_user'
+      security:
+      - ApiKeyAuth: []
+      summary: search user
+      tags:
+      - user
+  /api/user/update:
+    post:
+      consumes:
+      - application/json
+      description: update user
+      parameters:
+      - description: update user
+        in: body
+        name: msg
+        required: true
+        schema:
+          $ref: '#/definitions/api.MSG_REQ_update_user'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: result
+          schema:
+            $ref: '#/definitions/api.API_META_STATUS'
+      security:
+      - ApiKeyAuth: []
+      summary: update user
+      tags:
+      - user
+schemes:
+- https
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

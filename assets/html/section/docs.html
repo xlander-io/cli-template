@@ -1,0 +1,37 @@
+<section>
+    <h2>
+        cli-template Structure
+    </h2>
+
+    <p>
+        cli-template is example template project for general application.
+        You can fork it to accelerate yor application dev process.
+    </p>
+    <ul>
+        <li>1. How to run : <code>go run .</code></li>
+        <li>2. How to gen-api : <code>go run . gen_api</code></li>
+        <li>3. Two types of config mod with config-file in <code>configs</code> folder</li>
+        <li>4. API-Docs <a href="https://api.localhost">https://api.localhost </a>
+            (don't use safari when running localhost as api.localhost can't be resolved by safari)
+        </li>
+        <br/>
+        <li>5. Log system with file storage features
+            <ul>
+                <li>5.1 to show all history logs : <code>go run ./ log</code></li>
+                <li>5.2 to show only [error,panic,fatal] history logs : <code>go run ./ log --only_err=true</code></li>
+            </ul>
+        </li>
+        <br/>
+        <li>7. Current supported plugins
+            <ul>
+                <li>7.1 SqlData database [Gorm based]</li>
+                <li>7.2 Redis</li>
+                <li>7.3 HttpServer [Echo based]</li>
+                <li>7.4 Reference  [A local memory key-value reference system]</li>
+                <li>7.5 ElasticSearch</li>
+                <li>7.6 Single Process [a job only run in one process among all auto-scaling instances environment]</li>
+            </ul>
+        </li>
+    </ul>
+
+</section>

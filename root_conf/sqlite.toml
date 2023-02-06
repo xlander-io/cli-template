@@ -1,0 +1,7 @@
+[token]
+salt = "token_sqlite_salt"
+
+[sqlite]
+enable = true
+path = 'file::memory:?cache=shared'
+
