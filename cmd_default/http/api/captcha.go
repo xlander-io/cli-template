@@ -18,7 +18,7 @@ type Msg_Resp_Captcha struct {
 
 func configCaptcha(httpServer *echo.Echo) {
 	// user
-	httpServer.GET("/api/captcha", getCaptchaHandler, http_middleware.MID_IP_Action_SL(1, 3))
+	httpServer.GET("/api/user/captcha", getCaptchaHandler, http_middleware.MID_IP_Action_SL(1, 3))
 }
 
 // @Summary      get captcha

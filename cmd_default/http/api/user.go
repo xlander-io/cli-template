@@ -58,7 +58,7 @@ type Msg_Req_UserLogin struct {
 	Captcha    string `json:"captcha"`    // required
 }
 
-// @Description Msg_Resp_UserInfo
+// @Description Msg_Resp_Token
 type Msg_Resp_Token struct {
 	api.API_META_STATUS
 	Token string `json:"token"`
@@ -125,6 +125,15 @@ type Msg_Req_RegisterUser struct {
 	Vcode    string `json:"vcode"`    // required
 }
 
+// create
+// @Description Msg_Req_RegisterNodeUser
+type Msg_Req_CreateUser struct {
+	Email       string   `json:"email"`       // required
+	Password    string   `json:"password"`    // required
+	Roles       []string `json:"roles"`       // required
+	Permissions []string `json:"permissions"` // required
+}
+
 // @Description Msg_Req_CheckEmail
 type Msg_Req_CheckEmail struct {
 	Email string `json:"email"` // required
@@ -142,7 +151,8 @@ func configUser(httpServer *echo.Echo) {
 	// admin
 	httpServer.POST("/api/user/query", userQueryHandler, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser())
 	httpServer.POST("/api/user/update", userUpdateHandler, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser())
-	httpServer.POST("/api/user/email_check", email_check, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser())
+	httpServer.POST("/api/user/create", userCreateHandler, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser())
+	httpServer.POST("/api/user/email_check", emailCheckHandler, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser())
 
 }
 
@@ -376,40 +386,45 @@ func userResetPasswordHandler(ctx echo.Context) error {
 	// validate email
 	email_err := validator.ValidateEmail(msg.Email)
 	if email_err != nil {
-		res.MetaStatus(-3, "email format error")
+		res.MetaStatus(-2, "email format error")
 		return ctx.JSON(http.StatusOK, res)
 	}
 
 	// validate password
 	pass_err := validator.ValidatePassword(msg.Password)
 	if pass_err != nil {
-		res.MetaStatus(-4, "password format error")
+		res.MetaStatus(-3, "password format error")
 		return ctx.JSON(http.StatusOK, res)
 	}
 
 	// check vcode
 	vcode := strings.TrimSpace(msg.Vcode)
 	if !captcha.ValidateVCode(msg.Email, vcode) {
-		res.MetaStatus(-5, "vcode error")
+		res.MetaStatus(-4, "vcode error")
 		return ctx.JSON(http.StatusOK, res)
 	}
 
 	userResult, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, false, false)
 	if err != nil {
-		res.MetaStatus(-6, err.Error())
+		res.MetaStatus(-5, err.Error())
 		return ctx.JSON(http.StatusOK, res)
 	}
 	if len(userResult.Users) == 0 {
-		res.MetaStatus(-7, "user not exist")
+		res.MetaStatus(-6, "user not exist")
 		return ctx.JSON(http.StatusOK, res)
 	}
 	user := userResult.Users[0]
+
+	if user.Password == hash_util.SHA256String(msg.Password) {
+		res.MetaStatus(-7, "same as old password")
+		return ctx.JSON(http.StatusOK, res)
+	}
 
 	err = user_mgr.UpdateUser(sqldb_plugin.GetInstance(), map[string]interface{}{
 		"password": hash_util.SHA256String(msg.Password),
 	}, user.Id)
 	if err != nil {
-		res.MetaStatus(-7, err.Error())
+		res.MetaStatus(-8, err.Error())
 		return ctx.JSON(http.StatusOK, res)
 	}
 
@@ -611,6 +626,10 @@ func userUpdateHandler(ctx echo.Context) error {
 	}
 
 	update_map := map[string]interface{}{}
+	if msg.Update.Forbidden != nil {
+		update_map["forbidden"] = *msg.Update.Forbidden
+	}
+
 	if msg.Update.Roles != nil {
 		if !user_mgr.RolesDefined(*msg.Update.Roles) {
 			res.MetaStatus(-9, "roles error")
@@ -621,7 +640,7 @@ func userUpdateHandler(ctx echo.Context) error {
 			res.MetaStatus(-10, "roles marshal error")
 			return ctx.JSON(http.StatusOK, res)
 		}
-		update_map["Roles"] = string(roles_json)
+		update_map["roles"] = string(roles_json)
 	}
 
 	if msg.Update.Permissions != nil {
@@ -634,7 +653,7 @@ func userUpdateHandler(ctx echo.Context) error {
 			res.MetaStatus(-12, "permissions marshal error")
 			return ctx.JSON(http.StatusOK, res)
 		}
-		update_map["Permissions"] = string(permissions_json)
+		update_map["permissions"] = string(permissions_json)
 	}
 
 	err = user_mgr.UpdateUser(sqldb_plugin.GetInstance(), update_map, id)
@@ -650,6 +669,88 @@ func userUpdateHandler(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, res)
 }
 
+// @Summary      admin create user
+// @Tags         user
+// @Security ApiKeyAuth
+// @Accept		 json
+// @Param        msg  body  Msg_Req_CreateUser true  "update"
+// @Produce      json
+// @Success      200 {object} api.API_META_STATUS "result"
+// @Router       /api/user/create [post]
+func userCreateHandler(ctx echo.Context) error {
+	var msg Msg_Req_CreateUser
+	res := &api.API_META_STATUS{}
+
+	userInfo := http_middleware.GetUserInfo(ctx)
+	if userInfo == nil {
+		res.MetaStatus(-1, "user error")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	if !userInfo.HasOneOfRoles([]string{user_mgr.USER_ROLE_ADMIN}) {
+		res.MetaStatus(-5, "no permission")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	if err := ctx.Bind(&msg); err != nil {
+		res.MetaStatus(-1, "post data error")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	// validate email
+	email_err := validator.ValidateEmail(msg.Email)
+	if email_err != nil {
+		res.MetaStatus(-3, "email format error")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	// validate password
+	passwd_err := validator.ValidatePassword(msg.Password)
+	if passwd_err != nil {
+		res.MetaStatus(-4, "password format error:must contain number and letter, special character is optional,length 6-20")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	// check user exist
+	result, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, true, true)
+	if err != nil {
+		res.MetaStatus(-7, err.Error())
+		return ctx.JSON(http.StatusOK, res)
+	}
+	if len(result.Users) > 0 {
+		res.MetaStatus(-8, "user already exist")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	isSuperUser := false
+	for _, v := range msg.Roles {
+		if v == user_mgr.USER_ROLE_ADMIN || v == user_mgr.USER_ROLE_READONLY {
+			isSuperUser = true
+			break
+		}
+	}
+
+	// ip
+	remoteIp := ctx.RealIP()
+	err = sqldb_plugin.GetInstance().Transaction(func(tx *gorm.DB) error {
+		_, err = user_mgr.CreateUser(tx, msg.Email, msg.Password, isSuperUser, msg.Roles, msg.Permissions, remoteIp)
+		if err != nil {
+			return err
+		}
+
+		// other action
+
+		return nil
+	})
+	if err != nil {
+		res.MetaStatus(-10, err.Error())
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	res.MetaStatus(1, "success")
+	return ctx.JSON(http.StatusOK, res)
+}
+
 // @Summary      user email check
 // @Description  admin to check email
 // @Security ApiKeyAuth
@@ -659,7 +760,7 @@ func userUpdateHandler(ctx echo.Context) error {
 // @Produce      json
 // @Success      200 {object} Msg_Resp_UserInfo "user info"
 // @Router       /api/user/email_check [get]
-func email_check(ctx echo.Context) error {
+func emailCheckHandler(ctx echo.Context) error {
 	var msg Msg_Req_CheckEmail
 	res := &Msg_Resp_UserInfo{}
 
