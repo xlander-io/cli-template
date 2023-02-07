@@ -27,7 +27,7 @@ func GenCaptcha() (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	//gen id
+	// gen id
 	id := rand_util.GenRandStr(24)
 	err = set(id, math_result_str)
 	if err != nil {
@@ -40,7 +40,7 @@ func VerifyCaptcha(id, captchaCode string) bool {
 	if id == "" || captchaCode == "" {
 		return false
 	}
-	if verify(id, captchaCode, true) {
+	if verify(id, captchaCode, false) {
 		return true
 	} else {
 		return false
@@ -84,7 +84,7 @@ func verify(id, answer string, clear bool) bool {
 	return v == answer
 }
 
-///////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////
 
 var font *truetype.Font
 

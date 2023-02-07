@@ -13,7 +13,7 @@ import (
 
 const redis_vcode_prefix = "vcode"
 
-//send vcode to user
+// send vcode to user
 func GenVCode(vCodeKey string) (string, error) {
 	key := redis_plugin.GetInstance().GenKey(redis_vcode_prefix, vCodeKey)
 	code, _ := redis_plugin.GetInstance().Get(context.Background(), key).Result()
@@ -41,8 +41,12 @@ func ValidateVCode(vCodeKey string, code string) bool {
 	}
 
 	if value == code {
-		redis_plugin.GetInstance().Del(context.Background(), key)
 		return true
 	}
 	return false
+}
+
+func ClearVCode(vCodeKey string) {
+	key := redis_plugin.GetInstance().GenKey(redis_vcode_prefix, vCodeKey)
+	redis_plugin.GetInstance().Del(context.Background(), key)
 }
