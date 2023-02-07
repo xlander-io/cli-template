@@ -31,10 +31,11 @@ default_dev
 
 logs
 cli-template
-user_conf
+user_conf/*
+user_conf/*/*
+!user_conf/*.md
 
- 
-
+#####################
 
 /assets/geo_ip/country_ipv4.csv
 /assets/geo_ip/country_ipv6.csv
