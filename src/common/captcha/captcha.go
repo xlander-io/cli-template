@@ -40,7 +40,7 @@ func VerifyCaptcha(id, captchaCode string) bool {
 	if id == "" || captchaCode == "" {
 		return false
 	}
-	if verify(id, captchaCode, false) {
+	if verify(id, captchaCode, true) {
 		return true
 	} else {
 		return false

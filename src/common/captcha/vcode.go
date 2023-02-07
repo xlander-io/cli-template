@@ -39,14 +39,10 @@ func ValidateVCode(vCodeKey string, code string) bool {
 		basic.Logger.Debugln("ValidateVCode from redis err", "err", err, "vCodeKey", vCodeKey)
 		return false
 	}
+	redis_plugin.GetInstance().Del(context.Background(), key)
 
 	if value == code {
 		return true
 	}
 	return false
-}
-
-func ClearVCode(vCodeKey string) {
-	key := redis_plugin.GetInstance().GenKey(redis_vcode_prefix, vCodeKey)
-	redis_plugin.GetInstance().Del(context.Background(), key)
 }

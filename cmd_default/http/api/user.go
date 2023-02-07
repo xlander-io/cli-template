@@ -365,8 +365,6 @@ func userRegisterHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
-	captcha.ClearVCode(msg.Email)
-
 	res.Token = newUser.Token
 	res.MetaStatus(1, "success")
 	return ctx.JSON(http.StatusOK, res)
@@ -431,8 +429,6 @@ func userResetPasswordHandler(ctx echo.Context) error {
 		res.MetaStatus(-8, err.Error())
 		return ctx.JSON(http.StatusOK, res)
 	}
-
-	captcha.ClearVCode(msg.Email)
 
 	res.MetaStatus(1, "success")
 	return ctx.JSON(http.StatusOK, res)
