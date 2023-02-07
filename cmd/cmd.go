@@ -10,6 +10,7 @@ import (
 	"github.com/coreservice-io/cli-template/cmd_db"
 	"github.com/coreservice-io/cli-template/cmd_default"
 	"github.com/coreservice-io/cli-template/cmd_default/http/api"
+	"github.com/coreservice-io/cli-template/cmd_geoip"
 	"github.com/coreservice-io/cli-template/cmd_log"
 )
 
@@ -17,6 +18,7 @@ const CMD_NAME_DEFAULT = "default"
 const CMD_NAME_GEN_API = "gen_api"
 const CMD_NAME_LOG = "log"
 const CMD_NAME_DB = "db"
+const CMD_NAME_GEOIP = "geoip"
 const CMD_NAME_CONFIG = "config"
 
 // //////config to do cmd ///////////
@@ -72,6 +74,22 @@ func ConfigCmd() *cli.App {
 							fmt.Println("======== start of db data initialization ========")
 							cmd_db.Initialize()
 							fmt.Println("======== end  of  db data initialization ========")
+							return nil
+						},
+					},
+				},
+			},
+			{
+				Name:  CMD_NAME_GEOIP,
+				Usage: "geoip command",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "download",
+						Usage: "download geoip data",
+						Action: func(clictx *cli.Context) error {
+							fmt.Println("======== start of geoip data download ========")
+							cmd_geoip.Download()
+							fmt.Println("======== end  of  geoip data download ========")
 							return nil
 						},
 					},

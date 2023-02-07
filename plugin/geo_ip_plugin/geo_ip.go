@@ -20,11 +20,11 @@ func GetInstance_(name string) *GeoIp {
 	return instanceMap[name]
 }
 
-func Init(version string, dataset_folder string, logger func(string), err_logger func(string)) error {
-	return Init_("default", version, dataset_folder, logger, err_logger)
+func Init(update_key string, version string, dataset_folder string, logger func(string), err_logger func(string)) error {
+	return Init_("default", update_key, version, dataset_folder, logger, err_logger)
 }
 
-func Init_(name string, version string, dataset_folder string, logger func(string), err_logger func(string)) error {
+func Init_(name string, update_key string, version string, dataset_folder string, logger func(string), err_logger func(string)) error {
 	if name == "" {
 		name = "default"
 	}
@@ -36,7 +36,7 @@ func Init_(name string, version string, dataset_folder string, logger func(strin
 
 	ipClient := &GeoIp{}
 	// new instance
-	client, err := lib.NewClient(version, dataset_folder, logger, err_logger)
+	client, err := lib.NewClient(update_key, version, dataset_folder, false, logger, err_logger)
 	if err != nil {
 		return err
 	}

@@ -84,6 +84,7 @@ type ElasticSearch struct {
 
 type GeoIp struct {
 	Enable          bool   `toml:"enable"`
+	Update_key      string `toml:"update_key"`
 	Dataset_folder  string `toml:"dataset_folder"`
 	Dataset_version string `toml:"dataset_version"`
 }

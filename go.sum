@@ -13,8 +13,8 @@ github.com/coreservice-io/ecs_uploader v0.0.8 h1:2CN/amKKNT21gik2iz1Ix9P9CqTnTWE
 github.com/coreservice-io/ecs_uploader v0.0.8/go.mod h1:6BlykKtAqlXOQULX3YaQ/aSS7n0pU76TkBCF0Q/lxSo=
 github.com/coreservice-io/general-counter v0.0.3 h1:zGoZgqeV5XDKNybBFSSiIA/svz2iN8sX/1zHQkocjOM=
 github.com/coreservice-io/general-counter v0.0.3/go.mod h1:gVaS1k19ujx/qlxfYjY7JKkOhkQJkxuaOCHsMb2Agw4=
-github.com/coreservice-io/geo_ip v0.0.24 h1:hfniFr5poWXY59980ig335y1MkhcypBpdbI3U8jbdK8=
-github.com/coreservice-io/geo_ip v0.0.24/go.mod h1:SerP/8y54jSGok+RVQfEVrAeMNxwK+wb70UVfeiYTjg=
+github.com/coreservice-io/geo_ip v0.0.26 h1:nToUV9Hbeily45mFqC6Ibua8Kb0dCKAjiC7B3vZwxRU=
+github.com/coreservice-io/geo_ip v0.0.26/go.mod h1:VvL5nzRHE1ovkcz3Dw+JRdPfY3RuG/WkJmkboT+VByM=
 github.com/coreservice-io/gorm_log v0.1.4 h1:C3Xlu1TlfUvYtobJgEF5eWeQroawSqafxDubnkuSlE8=
 github.com/coreservice-io/gorm_log v0.1.4/go.mod h1:KhA2B4emVBneXuWlPQZ//PyrJIBLXbbhkFr/llPtUSI=
 github.com/coreservice-io/job v0.1.20 h1:eCtVkB5MrCK9K7XFUu2X6D894H3mzy+puLl3HFC6yic=
@@ -23,8 +23,8 @@ github.com/coreservice-io/log v0.1.18 h1:hZ8MXvnxtchnjap36ac4Cpe63W8Mg2eRahBtP9y
 github.com/coreservice-io/log v0.1.18/go.mod h1:skkyNG6Y27IrNYzFc0NCekU6+OM+CiLh2AJxTpbRKsA=
 github.com/coreservice-io/logrus_log v0.1.20 h1:wZAe/ddKLMvN6OJDctZP1D1AWU34r2LfwzrLhm1OXj8=
 github.com/coreservice-io/logrus_log v0.1.20/go.mod h1:bEsSSRphetRNaKomr4kq59w5UUXvKW2YsI47gr2cw3s=
-github.com/coreservice-io/package_client v0.0.11 h1:gXbVJjxkdLlRqINkgkxZhQTXn7ypqrwFa4OwyrWPdWs=
-github.com/coreservice-io/package_client v0.0.11/go.mod h1:JuG1JyAW5mebmdssIIIxPQj8DwUxLwaBYJxpGpVEV7I=
+github.com/coreservice-io/package_client v0.0.12 h1:8cWICc1HNPeglbb8FIzdmKg/PUOgJE9NgPm7Nw4/mkE=
+github.com/coreservice-io/package_client v0.0.12/go.mod h1:JuG1JyAW5mebmdssIIIxPQj8DwUxLwaBYJxpGpVEV7I=
 github.com/coreservice-io/redis_spr v0.1.20 h1:aFrnxXforYRaibkKoZ+n44wMQgYf2KD6Pk+JQuttkoo=
 github.com/coreservice-io/redis_spr v0.1.20/go.mod h1:aqN5LsNLNJIdnkc/cYorN3To+6sm6Oa2AdPSPAtmC+Q=
 github.com/coreservice-io/reference v0.0.9 h1:5V3rO/e0Y6or+jd/rBFM2afqj+cRL2XQPBMxqcuC7p0=
