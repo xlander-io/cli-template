@@ -16,11 +16,11 @@ func StartGeoIpComponent() (lib.GeoIpInterface, error) {
 	}
 
 	if toml_conf.Geo_ip.Update_key == "" {
-		return nil, errors.New("update_key error:" + toml_conf.Geo_ip.Update_key)
+		return nil, errors.New("geoip update_key error:" + toml_conf.Geo_ip.Update_key)
 	}
 
 	if toml_conf.Geo_ip.Dataset_version == "" {
-		return nil, errors.New("dataset_version error:" + toml_conf.Geo_ip.Dataset_version)
+		return nil, errors.New("geoip dataset_version error:" + toml_conf.Geo_ip.Dataset_version)
 	}
 
 	_, ds_f_abs_exist, _ := basic.PathExist(toml_conf.Geo_ip.Dataset_folder)

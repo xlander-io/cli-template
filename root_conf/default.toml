@@ -56,6 +56,7 @@ username = 'xxxx'
 password = 'xxxx'
 
 [geo_ip]
+update_key=''
 enable = false
 dataset_version ='0.0.24'
 dataset_folder = 'assets/geo_ip'
