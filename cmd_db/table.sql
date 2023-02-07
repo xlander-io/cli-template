@@ -8,7 +8,7 @@ CREATE TABLE `users` (
   `id` bigint(20)  NOT NULL AUTO_INCREMENT,
   `email` varchar(200) DEFAULT NULL,
   `password` varchar(200) DEFAULT NULL,
-  `token` varchar(24) DEFAULT NULL,
+  `token` varchar(32) DEFAULT NULL,
   `forbidden` tinyint(1) DEFAULT NULL,
   `roles` longtext,
   `permissions` longtext,
