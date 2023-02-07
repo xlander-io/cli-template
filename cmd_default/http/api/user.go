@@ -14,6 +14,7 @@ import (
 	"github.com/coreservice-io/cli-template/src/common/http/api"
 	"github.com/coreservice-io/cli-template/src/common/json"
 	"github.com/coreservice-io/cli-template/src/common/limiter"
+	"github.com/coreservice-io/cli-template/src/common/token_mgr"
 	"github.com/coreservice-io/cli-template/src/common/validator"
 	"github.com/coreservice-io/cli-template/src/user_mgr"
 	"github.com/coreservice-io/utils/hash_util"
@@ -27,6 +28,7 @@ type User struct {
 	Email                   string   `json:"email"`
 	Password                string   `json:"password"`
 	Token                   string   `json:"token"`
+	Is_super_token          bool     `json:"is_super_token"`
 	Forbidden               bool     `json:"forbidden"`
 	Roles                   []string `json:"roles"`
 	Permissions             []string `json:"permissions"`
@@ -525,9 +527,9 @@ func userQueryHandler(ctx echo.Context) error {
 
 	for _, um := range userResult.Users {
 		um.Password = ""
-		if um.Id != userInfo.Id {
-			um.Token = ""
-		}
+		// if um.Id != userInfo.Id {
+		// 	um.Token = ""
+		// }
 		msguser := User{}
 		err = copier.Copy(&msguser, &um)
 		if err != nil {
@@ -564,6 +566,10 @@ func userQueryHandler(ctx echo.Context) error {
 
 		msguser.Roles = roles
 		msguser.Permissions = permissions
+
+		_, isSuperToken := token_mgr.TokenMgr.CheckToken(um.Token)
+		msguser.Is_super_token = isSuperToken
+
 		res.Data = append(res.Data, &msguser)
 	}
 
