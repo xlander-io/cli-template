@@ -13,11 +13,11 @@ func InitGeoIp(toml_conf *config.TomlConfig) error {
 	if toml_conf.Geo_ip.Enable {
 
 		if toml_conf.Geo_ip.Update_key == "" {
-			return errors.New("update_key error:" + toml_conf.Geo_ip.Update_key)
+			return errors.New("geoip update_key error:" + toml_conf.Geo_ip.Update_key)
 		}
 
 		if toml_conf.Geo_ip.Dataset_version == "" {
-			return errors.New("dataset_version error:" + toml_conf.Geo_ip.Dataset_version)
+			return errors.New("geoip dataset_version error:" + toml_conf.Geo_ip.Dataset_version)
 		}
 
 		ds_f_abs, ds_f_abs_exist, _ := basic.PathExist(toml_conf.Geo_ip.Dataset_folder)

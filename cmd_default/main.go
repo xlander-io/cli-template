@@ -58,9 +58,10 @@ func StartDefault() {
 	// }
 
 	go func() {
+		fmt.Println("running and sleep...")
 		for {
 			time.Sleep(5 * time.Second)
-			fmt.Println("running and sleep")
+			fmt.Print(".")
 		}
 	}()
 
