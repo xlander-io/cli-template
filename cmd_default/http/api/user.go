@@ -430,6 +430,8 @@ func userResetPasswordHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
+	user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, false, true)
+
 	res.MetaStatus(1, "success")
 	return ctx.JSON(http.StatusOK, res)
 }
