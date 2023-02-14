@@ -45,25 +45,19 @@ func (cert *Cert) AutoUpdate(update_change_callback func(string, string)) {
 		cert.Auto_updating = true
 		job.Start(
 			"cert_auto_update_job",
+			job.TYPE_PANIC_REDO,
+			int64(cert.Check_interval_secs),
+			nil,
+			nil,
 			// job process
-			func() {
+			func(j *job.Job) {
 				cert.update_(update_change_callback)
 			},
 			// onPanic callback, run if panic happened
-			func(panic_err interface{}) {
+			func(j *job.Job, panic_err interface{}) {
 				basic.Logger.Errorln(panic_err)
 			},
-			int64(cert.Check_interval_secs),
-			job.TYPE_PANIC_REDO,
-			// check continue callback, the job will stop running if return false
-			// the job will keep running if this callback is nil
-			func(job *job.Job) bool {
-				return true
-			},
-			// onFinish callback
-			func(inst *job.Job) {
-
-			},
+			nil,
 		)
 	}
 }

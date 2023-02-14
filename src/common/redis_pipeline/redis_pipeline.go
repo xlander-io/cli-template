@@ -33,7 +33,14 @@ func ScheduleRedisPipelineExec() {
 		job.Start(
 			//job process
 			jobName,
-			func() {
+			// job type
+			// UJob.TYPE_PANIC_REDO  auto restart if panic
+			// UJob.TYPE_PANIC_RETURN  stop if panic
+			job.TYPE_PANIC_REDO,
+			1,
+			nil,
+			nil,
+			func(j *job.Job) {
 				for {
 					if len(cmdListChannel) < 100 && time.Now().UTC().UnixMilli()-last_exec_time_unixmilli < exec_interval_limit_millisec {
 						time.Sleep(250 * time.Millisecond)
@@ -43,17 +50,9 @@ func ScheduleRedisPipelineExec() {
 				}
 			},
 			//onPanic callback
-			func(panic_err interface{}) {
+			func(j *job.Job, panic_err interface{}) {
 				basic.Logger.Errorln(panic_err)
 			},
-			1,
-			// job type
-			// UJob.TYPE_PANIC_REDO  auto restart if panic
-			// UJob.TYPE_PANIC_RETURN  stop if panic
-			job.TYPE_PANIC_REDO,
-			// check continue callback, the job will stop running if return false
-			// the job will keep running if this callback is nil
-			nil,
 			// onFinish callback
 			nil,
 		)
