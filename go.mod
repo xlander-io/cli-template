@@ -28,7 +28,7 @@ require (
 	github.com/coreservice-io/logrus_log v0.2.1
 	github.com/coreservice-io/redis_spr v0.1.20
 	github.com/coreservice-io/reference v0.0.9
-	github.com/coreservice-io/utils v0.2.2
+	github.com/coreservice-io/utils v0.2.3
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/jinzhu/copier v0.3.5
 	github.com/pelletier/go-toml v1.9.5

@@ -77,6 +77,16 @@ func ConfigCmd() *cli.App {
 							return nil
 						},
 					},
+					{
+						Name:  "migrate",
+						Usage: "migrate db tables",
+						Action: func(clictx *cli.Context) error {
+							fmt.Println("======== start of db table migration ========")
+							cmd_db.Migrate()
+							fmt.Println("======== end of db table migration ========")
+							return nil
+						},
+					},
 				},
 			},
 			{

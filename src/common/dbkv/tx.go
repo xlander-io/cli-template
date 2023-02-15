@@ -12,7 +12,7 @@ import (
 )
 
 func SetDBKV_Str(tx *gorm.DB, keystr string, value string, description string) error {
-	tx_result := tx.Table("dbkv").Clauses(clause.OnConflict{UpdateAll: true}).Create(&DBKVModel{Key: keystr, Value: value, Description: description})
+	tx_result := tx.Table(TABLE_NAME_DBKV).Clauses(clause.OnConflict{UpdateAll: true}).Create(&DBKVModel{Key: keystr, Value: value, Description: description})
 	if tx_result.Error != nil {
 		return tx_result.Error
 	}
@@ -57,14 +57,14 @@ func SetDBKV_Float64(tx *gorm.DB, keystr string, value float64, description stri
 }
 
 func DeleteDBKV_Key(tx *gorm.DB, keystr string) error {
-	if err := tx.Table("dbkv").Where(" `key` = ?", keystr).Delete(&DBKVModel{}).Error; err != nil {
+	if err := tx.Table(TABLE_NAME_DBKV).Where(" `key` = ?", keystr).Delete(&DBKVModel{}).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
 func DeleteDBKV_Id(tx *gorm.DB, id int64) error {
-	if err := tx.Table("dbkv").Where(" `id` = ?", id).Delete(&DBKVModel{}).Error; err != nil {
+	if err := tx.Table(TABLE_NAME_DBKV).Where(" `id` = ?", id).Delete(&DBKVModel{}).Error; err != nil {
 		return err
 	}
 	return nil
@@ -221,12 +221,12 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 	query := func(resultHolder interface{}) error {
 		queryResults := resultHolder.(*DBKVQueryResults)
 
-		query := tx.Table("dbkv")
+		query := tx.Table(TABLE_NAME_DBKV)
 		if id != nil {
 			query.Where("id = ?", *id)
 		}
 		if keys != nil {
-			query.Where("dbkv.key IN ?", *keys)
+			query.Where(TABLE_NAME_DBKV+".key IN ?", *keys)
 		}
 
 		query.Count(&queryResults.TotalCount)

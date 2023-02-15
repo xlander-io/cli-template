@@ -213,7 +213,7 @@ func userInfoHandler(ctx echo.Context) error {
 	res.User.Password = ""
 
 	// ip
-	ipInfo, err := geo_ip_plugin.GetInstance().GetInfo(userInfo.Register_ip)
+	ipInfo, err := geo_ip_plugin.GetInstance().GetInfo(userInfo.Register_ipv4)
 	if err != nil {
 		res.User.Register_continent_code = ipInfo.Continent_code
 		res.User.Register_country_code = ipInfo.Country_code
@@ -542,10 +542,10 @@ func userQueryHandler(ctx echo.Context) error {
 		}
 
 		// get location
-		if um.Register_ip != "" {
-			ipInfo, err := geo_ip_plugin.GetInstance().GetInfo(um.Register_ip)
+		if um.Register_ipv4 != "" {
+			ipInfo, err := geo_ip_plugin.GetInstance().GetInfo(um.Register_ipv4)
 			if err != nil {
-				basic.Logger.Errorln("user register ip can't be reserved. ip:" + um.Register_ip)
+				basic.Logger.Errorln("user register ip can't be reserved. ip:" + um.Register_ipv4)
 			} else {
 				msguser.Register_country_code = ipInfo.Country_code
 				msguser.Register_continent_code = ipInfo.Continent_code

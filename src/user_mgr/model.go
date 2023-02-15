@@ -2,14 +2,20 @@ package user_mgr
 
 type UserModel struct {
 	Id               int64             `json:"id" gorm:"primaryKey"`
-	Email            string            `json:"email" gorm:"type:varchar(100); index; unique"`
-	Password         string            `json:"password" gorm:"type:varchar(100)"`
-	Token            string            `json:"token" gorm:"type:varchar(32); index"`
+	Email            string            `json:"email" gorm:"type:varchar(128);uniqueIndex;"`
+	Password         string            `json:"password" gorm:"type:varchar(128)"`
+	Token            string            `json:"token" gorm:"type:varchar(64); uniqueIndex;"`
 	Forbidden        bool              `json:"forbidden"`
 	Roles            string            `json:"roles"`
 	Roles_map        map[string]string `json:"roles_map" gorm:"-"`
 	Permissions      string            `json:"permissions"`
 	Permissions_map  map[string]string `json:"permissions_map" gorm:"-"`
-	Register_ip      string            `json:"register_ip" gorm:"type:varchar(45)" `
+	Register_ipv4    string            `json:"register_ipv4" gorm:"type:varchar(64);index;"`
 	Created_unixtime int64             `json:"created_unixtime" gorm:"autoCreateTime"`
+}
+
+const TABLE_NAME_USER = "user"
+
+func (model *UserModel) TableName() string {
+	return TABLE_NAME_USER
 }

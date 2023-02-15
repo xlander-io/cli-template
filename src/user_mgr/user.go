@@ -30,7 +30,7 @@ func GenRandUserToken(isSuperUser bool) string {
 	}
 }
 
-func CreateUser(tx *gorm.DB, email string, passwd string, isSuperUser bool, roles []string, permissions []string, ip string) (*UserModel, error) {
+func CreateUser(tx *gorm.DB, email string, passwd string, isSuperUser bool, roles []string, permissions []string, ipv4 string) (*UserModel, error) {
 	sha256_passwd := hash_util.SHA256String(passwd)
 	token := GenRandUserToken(isSuperUser)
 
@@ -53,7 +53,7 @@ func CreateUser(tx *gorm.DB, email string, passwd string, isSuperUser bool, role
 		Roles_map:       make(map[string]string),
 		Permissions_map: make(map[string]string),
 		Forbidden:       false,
-		Register_ip:     ip,
+		Register_ipv4:   ipv4,
 	}
 	for _, role := range roles {
 		user.Roles_map[role] = role
@@ -63,7 +63,7 @@ func CreateUser(tx *gorm.DB, email string, passwd string, isSuperUser bool, role
 		user.Permissions_map[p] = p
 	}
 
-	if err := tx.Table("users").Create(&user).Error; err != nil {
+	if err := tx.Table(TABLE_NAME_USER).Create(&user).Error; err != nil {
 		return nil, err
 	}
 
@@ -80,7 +80,7 @@ func UpdateUser(tx *gorm.DB, updateData map[string]interface{}, id int64) error 
 		return errors.New("user not exist")
 	}
 
-	update_result := tx.Table("users").Where("id =?", id).Updates(updateData)
+	update_result := tx.Table(TABLE_NAME_USER).Where("id =?", id).Updates(updateData)
 	if update_result.Error != nil {
 		return update_result.Error
 	}
@@ -133,7 +133,7 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 	query := func(resultHolder interface{}) error {
 		queryResult := resultHolder.(*QueryUserResult)
 
-		query := tx.Table("users")
+		query := tx.Table(TABLE_NAME_USER)
 		if id != nil {
 			query.Where("id = ?", *id)
 		}

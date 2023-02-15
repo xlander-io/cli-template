@@ -26,7 +26,7 @@
 
 > step2. check database initialization 
 - 1. config your database in your *.toml file
-- 2. open your database and construct the tables using file 'assets/sql/table.sql'
+- 2. run 'go run ./ db migrate' which will call the function 'Migrate()' inside the 'cmd_db/migrate.go' file which create the db tables
 - 3. run 'go run ./ db init' which will call the function 'Initialize()' inside the 'cmd_db/initialize.go' file which initialize the db data
 
 >step2.5 optional ,geoip download

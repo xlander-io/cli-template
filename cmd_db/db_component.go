@@ -4,6 +4,7 @@ import (
 	"github.com/coreservice-io/cli-template/basic"
 	"github.com/coreservice-io/cli-template/basic/config"
 	"github.com/coreservice-io/cli-template/component"
+	"github.com/coreservice-io/cli-template/src/common/token_mgr"
 )
 
 func StartDBComponent() {
@@ -26,6 +27,10 @@ func StartDBComponent() {
 		basic.Logger.Fatalln("redis not enabled in config")
 	}
 	if err := component.InitRedis(toml_conf); err != nil {
+		basic.Logger.Fatalln(err)
+	}
+	///////////////////////////////
+	if err := token_mgr.InitTokenMgr(toml_conf); err != nil {
 		basic.Logger.Fatalln(err)
 	}
 }
