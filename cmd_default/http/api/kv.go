@@ -13,10 +13,12 @@ import (
 )
 
 type DBKV struct {
-	Id          int64  `json:"id"`
-	Key         string `json:"key"`
-	Value       string `json:"value"`
-	Description string `json:"description"`
+	Id               int64  `json:"id"`
+	Key              string `json:"key"`
+	Value            string `json:"value"`
+	Description      string `json:"description"`
+	Created_unixtime int64  `json:"created_unixtime"`
+	Update_unixtime  int64  `json:"update_unixtime"`
 }
 
 // create

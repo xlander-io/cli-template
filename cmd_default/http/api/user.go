@@ -37,6 +37,7 @@ type User struct {
 	Register_continent_code string   `json:"register_continent_code"`
 	Register_region         string   `json:"register_region"`
 	Created_unixtime        int64    `json:"created_unixtime"`
+	Update_unixtime         int64    `json:"update_unixtime"`
 }
 
 type Msg_Req_EmailVCode struct {
@@ -303,7 +304,7 @@ func userLoginHandler(ctx echo.Context) error {
 // @Accept       json
 // @Param        msg  body  Msg_Req_RegisterUser true  "new user info"
 // @Produce      json
-// @Success      200 {object} Msg_Resp_RegisterUser "result"
+// @Success      200 {object} Msg_Resp_Token "result"
 // @Router       /api/user/register [post]
 func userRegisterHandler(ctx echo.Context) error {
 	var msg Msg_Req_RegisterUser

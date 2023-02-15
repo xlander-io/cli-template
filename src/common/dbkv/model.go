@@ -8,10 +8,12 @@ import (
 const TABLE_NAME_DBKV = "dbkv"
 
 type DBKVModel struct {
-	Id          int64  `json:"id" gorm:"primaryKey"`
-	Key         string `json:"key" gorm:"type:varchar(512);uniqueIndex"`
-	Value       string `json:"value"`
-	Description string `json:"description"`
+	Id               int64  `json:"id" gorm:"primaryKey"`
+	Key              string `json:"key" gorm:"type:varchar(512);uniqueIndex"`
+	Value            string `json:"value"`
+	Description      string `json:"description"`
+	Update_unixtime  int64  `json:"update_unixtime" gorm:"autoUpdateTime;type:bigint(20)"`
+	Created_unixtime int64  `json:"created_unixtime" gorm:"autoCreateTime;type:bigint(20)"`
 }
 
 func (model *DBKVModel) TableName() string {

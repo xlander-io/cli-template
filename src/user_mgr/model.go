@@ -11,7 +11,8 @@ type UserModel struct {
 	Permissions      string            `json:"permissions"`
 	Permissions_map  map[string]string `json:"permissions_map" gorm:"-"`
 	Register_ipv4    string            `json:"register_ipv4" gorm:"type:varchar(64);index;"`
-	Created_unixtime int64             `json:"created_unixtime" gorm:"autoCreateTime"`
+	Update_unixtime  int64             `json:"update_unixtime" gorm:"autoUpdateTime;type:bigint(20)"`
+	Created_unixtime int64             `json:"created_unixtime" gorm:"autoCreateTime;type:bigint(20)"`
 }
 
 const TABLE_NAME_USER = "user"
