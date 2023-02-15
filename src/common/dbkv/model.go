@@ -8,7 +8,7 @@ import (
 const TABLE_NAME_DBKV = "dbkv"
 
 type DBKVModel struct {
-	Id               int64  `json:"id" gorm:"primaryKey"`
+	Id               int64  `json:"id" gorm:"type:bigint(20);primaryKey;autoIncrement"`
 	Key              string `json:"key" gorm:"type:varchar(512);uniqueIndex"`
 	Value            string `json:"value"`
 	Description      string `json:"description"`

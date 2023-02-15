@@ -1,7 +1,7 @@
 package user_mgr
 
 type UserModel struct {
-	Id               int64             `json:"id" gorm:"primaryKey"`
+	Id               int64             `json:"id" gorm:"type:bigint(20);primaryKey;autoIncrement"`
 	Email            string            `json:"email" gorm:"type:varchar(128);uniqueIndex;"`
 	Password         string            `json:"password" gorm:"type:varchar(128)"`
 	Token            string            `json:"token" gorm:"type:varchar(64); uniqueIndex;"`
