@@ -12,31 +12,27 @@ type element struct {
 
 type RandMap struct {
 	m sync.RWMutex
-
 	// Where the objects you care about are stored.
-	container map[int64]element
-
+	container map[any]element
 	// A slice of the map keys used in the map above. We put them in a slice
 	// so that we can get a random key by choosing a random index.
-	keys []int64
-
+	keys []any
 	// We store the index of each key, so that when we remove an item, we can
 	// quickly remove it from the slice above.
-	sliceKeyIndex map[int64]int
-
+	sliceKeyIndex map[any]int
 	//len of keys
 	counter int
 }
 
 func NewRandInt64Map() *RandMap {
 	return &RandMap{
-		container:     make(map[int64]element),
-		sliceKeyIndex: make(map[int64]int),
+		container:     make(map[any]element),
+		sliceKeyIndex: make(map[any]int),
 		counter:       0,
 	}
 }
 
-func (s *RandMap) Set(key int64, item interface{}) {
+func (s *RandMap) Set(key any, item interface{}) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
@@ -53,7 +49,7 @@ func (s *RandMap) Set(key int64, item interface{}) {
 	}
 }
 
-func (s *RandMap) Get(key int64) interface{} {
+func (s *RandMap) Get(key any) interface{} {
 	s.m.RLock()
 	defer s.m.RUnlock()
 
@@ -65,17 +61,15 @@ func (s *RandMap) Get(key int64) interface{} {
 
 }
 
-func (s *RandMap) Remove(key int64) {
+func (s *RandMap) Remove(key any) {
 	s.m.Lock()
 	defer s.m.Unlock()
-
 	// get index in key slice for key
 	index, exists := s.sliceKeyIndex[key]
 	if !exists {
 		// item does not exist
 		return
 	}
-
 	delete(s.sliceKeyIndex, key)
 
 	counter_prev := s.counter - 1
