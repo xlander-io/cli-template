@@ -5,6 +5,7 @@ import (
 
 	general_counter "github.com/coreservice-io/general-counter"
 	"github.com/coreservice-io/log"
+	"gorm.io/gorm"
 )
 
 var instanceMap = map[string]*general_counter.GeneralCounter{}
@@ -19,6 +20,12 @@ func GetInstance_(name string) *general_counter.GeneralCounter {
 
 func Init(gConfig *general_counter.GeneralCounterConfig, logger log.Logger) error {
 	return Init_("default", gConfig, logger)
+}
+
+func DBMigrate(db *gorm.DB) {
+	db.AutoMigrate(&general_counter.GCounterModel{},
+		&general_counter.GCounterDailyAggModel{},
+		&general_counter.GCounterDetailModel{})
 }
 
 // Init a new instance.

@@ -29,6 +29,7 @@ func StartDBComponent() {
 	if err := component.InitRedis(toml_conf); err != nil {
 		basic.Logger.Fatalln(err)
 	}
+
 	///////////////////////////////
 	if err := token_mgr.InitTokenMgr(toml_conf); err != nil {
 		basic.Logger.Fatalln(err)
