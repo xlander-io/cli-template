@@ -10,8 +10,8 @@ const TABLE_NAME_DBKV = "dbkv"
 type DBKVModel struct {
 	Id               int64  `json:"id" gorm:"type:bigint(20);primaryKey;autoIncrement"`
 	Key              string `json:"key" gorm:"type:varchar(512);uniqueIndex"`
-	Value            string `json:"value"`
-	Description      string `json:"description"`
+	Value            string `json:"value" gorm:"type:longtext;"`
+	Description      string `json:"description" gorm:"type:longtext;"`
 	Update_unixtime  int64  `json:"update_unixtime" gorm:"autoUpdateTime;type:bigint(20)"`
 	Created_unixtime int64  `json:"created_unixtime" gorm:"autoCreateTime;type:bigint(20)"`
 }
