@@ -35,8 +35,7 @@ func DeclareApi(httpServer *echo.Echo) {
 	configUser(httpServer)
 	// kv
 	configKv(httpServer)
-	// captcha
-	configCaptcha(httpServer)
+
 }
 
 func ConfigApi(httpServer *echo.Echo) {

@@ -46,6 +46,13 @@ type Msg_Req_EmailVCode struct {
 	Captcha    string `json:"captcha"`    // required
 }
 
+// @Msg_Resp_Captcha
+type Msg_Resp_Captcha struct {
+	api.API_META_STATUS
+	Id      string `json:"id"`
+	Content string `json:"content"`
+}
+
 // @Msg_Resp_Auth_Config
 type Msg_Resp_Auth_Config struct {
 	api.API_META_STATUS
@@ -143,20 +150,115 @@ type Msg_Req_CheckEmail struct {
 }
 
 func configUser(httpServer *echo.Echo) {
+	//general
+	httpServer.GET("/api/user/captcha", getCaptchaHandler, http_middleware.MID_Default_IP_Action_SL())
+	httpServer.POST("/api/user/email_vcode", userEmailVCodeHandler, http_middleware.MID_Default_IP_Action_SL())
 
-	httpServer.GET("/api/user/auth_config", authConfigHandler, http_middleware.MID_IP_Action_SL(600, 600))
-	httpServer.POST("/api/user/login", userLoginHandler, http_middleware.MID_IP_Action_SL(600, 600))
-	httpServer.POST("/api/user/register", userRegisterHandler, http_middleware.MID_IP_Action_SL(600, 600))
-	httpServer.POST("/api/user/reset_password", userResetPasswordHandler, http_middleware.MID_IP_Action_SL(600, 600))
-	httpServer.POST("/api/user/email_vcode", userEmailVCodeHandler, http_middleware.MID_IP_Action_SL(600, 600))
+	//config
+	httpServer.GET("/api/user/auth_config", authConfigHandler, http_middleware.MID_Default_IP_Action_SL())
+
+	// user
+	httpServer.POST("/api/user/login", userLoginHandler, http_middleware.MID_Default_IP_Action_SL())
+	httpServer.POST("/api/user/register", userRegisterHandler, http_middleware.MID_Default_IP_Action_SL())
+	httpServer.POST("/api/user/reset_password", userResetPasswordHandler, http_middleware.MID_Default_IP_Action_SL())
 	httpServer.GET("/api/user/info", userInfoHandler, http_middleware.MID_TokenPreCheck(false), http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser())
 
-	// admin
-	httpServer.POST("/api/user/query", userQueryHandler, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser())
-	httpServer.POST("/api/user/update", userUpdateHandler, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser())
-	httpServer.POST("/api/user/create", userCreateHandler, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser())
-	httpServer.POST("/api/user/email_check", emailCheckHandler, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser())
+	// admin|readonly
+	httpServer.POST("/api/user/admin/query", userQueryHandler, http_middleware.MID_TokenPreCheck(true),
+		http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser(),
+		http_middleware.MID_HasAnyRole([]string{user_mgr.USER_ROLE_ADMIN, user_mgr.USER_ROLE_READONLY}))
 
+	httpServer.POST("/api/user/admin/update", userUpdateHandler, http_middleware.MID_TokenPreCheck(true),
+		http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser(),
+		http_middleware.MID_HasAllRoles([]string{user_mgr.USER_ROLE_ADMIN}))
+
+	httpServer.POST("/api/user/admin/create", userCreateHandler, http_middleware.MID_TokenPreCheck(true),
+		http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser(),
+		http_middleware.MID_HasAllRoles([]string{user_mgr.USER_ROLE_ADMIN}))
+
+}
+
+// @Summary      get captcha
+// @Tags         captcha
+// @Produce      json
+// @response 	 200 {object} Msg_Resp_Captcha "result"
+// @Router       /api/user/captcha [get]
+func getCaptchaHandler(ctx echo.Context) error {
+
+	res := &Msg_Resp_Captcha{}
+
+	id, base64Code, err := captcha.GenCaptcha()
+	if err != nil {
+		// error gen captcha
+		res.MetaStatus(-1, "gen captcha err:"+err.Error())
+		return ctx.JSON(http.StatusOK, res)
+	}
+	if id == "" || base64Code == "" {
+		// error gen captcha
+		res.MetaStatus(-1, "gen captcha err")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	res.MetaStatus(1, "success")
+	res.Id = id
+	res.Content = base64Code
+	return ctx.JSON(http.StatusOK, res)
+}
+
+// @Summary      send email VCode
+// @Tags         user
+// @Accept       json
+// @Param        msg  body  Msg_Req_EmailVCode  true  "get email vcode"
+// @Produce      json
+// @Success      200 {object} api.API_META_STATUS "result"
+// @Router       /api/user/email_vcode [post]
+func userEmailVCodeHandler(ctx echo.Context) error {
+	var msg Msg_Req_EmailVCode
+	res := &api.API_META_STATUS{}
+	if err := ctx.Bind(&msg); err != nil {
+		res.MetaStatus(-1, "post data error")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	// captcha
+	if !captcha.VerifyCaptcha(msg.Captcha_id, msg.Captcha) {
+		res.MetaStatus(-2, "captcha error")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	// validate email
+	email_err := validator.ValidateEmail(msg.Email)
+	if email_err != nil {
+		res.MetaStatus(-2, "email format error")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	// send vcode
+	if !limiter.Allow(msg.Email, 20, 1) {
+		res.MetaStatus(-3, "too frequent")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	code, err := captcha.GenVCode(msg.Email)
+	if err != nil {
+		res.MetaStatus(-4, err.Error())
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	// send
+	fromText := config.Get_config().Toml_config.Smtp.From_email
+	toAddress := msg.Email
+	subject := "Verification code"
+	body := "Your verification code is [ " + code + " ], it will expire in 4 hours"
+	err = mail_plugin.GetInstance().Send(fromText, toAddress, subject, body)
+	if err != nil {
+		basic.Logger.Errorln("send VCode error:", err)
+		res.MetaStatus(-1, "send VCode failed")
+		return ctx.JSON(http.StatusOK, res)
+	}
+
+	res.MetaStatus(1, "success")
+	return ctx.JSON(http.StatusOK, res)
 }
 
 // @Summary      get role setting
@@ -221,24 +323,6 @@ func userInfoHandler(ctx echo.Context) error {
 		res.User.Register_region = ipInfo.Region
 	}
 
-	res.MetaStatus(1, "success")
-	return ctx.JSON(http.StatusOK, res)
-}
-
-// @Summary      user token check
-// @Description  user request api to check token
-// @Security ApiKeyAuth
-// @Tags         user
-// @Produce      json
-// @Success      200 {object} api.API_META_STATUS "token response"
-// @Router       /api/user/token_check [get]
-func token_check(ctx echo.Context) error {
-	res := &api.API_META_STATUS{}
-	userInfo := http_middleware.GetUserInfo(ctx)
-	if userInfo == nil {
-		res.MetaStatus(-1, "token error not_exist|forbidden|wrong")
-		return ctx.JSON(http.StatusOK, res)
-	}
 	res.MetaStatus(1, "success")
 	return ctx.JSON(http.StatusOK, res)
 }
@@ -437,62 +521,6 @@ func userResetPasswordHandler(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, res)
 }
 
-// @Summary      send email VCode
-// @Tags         user
-// @Accept       json
-// @Param        msg  body  Msg_Req_EmailVCode  true  "get email vcode"
-// @Produce      json
-// @Success      200 {object} api.API_META_STATUS "result"
-// @Router       /api/user/email_vcode [post]
-func userEmailVCodeHandler(ctx echo.Context) error {
-	var msg Msg_Req_EmailVCode
-	res := &api.API_META_STATUS{}
-	if err := ctx.Bind(&msg); err != nil {
-		res.MetaStatus(-1, "post data error")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	// captcha
-	if !captcha.VerifyCaptcha(msg.Captcha_id, msg.Captcha) {
-		res.MetaStatus(-2, "captcha error")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	// validate email
-	email_err := validator.ValidateEmail(msg.Email)
-	if email_err != nil {
-		res.MetaStatus(-2, "email format error")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	// send vcode
-	if !limiter.Allow(msg.Email, 20, 1) {
-		res.MetaStatus(-3, "too frequent")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	code, err := captcha.GenVCode(msg.Email)
-	if err != nil {
-		res.MetaStatus(-4, err.Error())
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	// send
-	fromText := config.Get_config().Toml_config.Smtp.From_email
-	toAddress := msg.Email
-	subject := "Verification code"
-	body := "Your verification code is [ " + code + " ], it will expire in 4 hours"
-	err = mail_plugin.GetInstance().Send(fromText, toAddress, subject, body)
-	if err != nil {
-		basic.Logger.Errorln("send VCode error:", err)
-		res.MetaStatus(-1, "send VCode failed")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	res.MetaStatus(1, "success")
-	return ctx.JSON(http.StatusOK, res)
-}
-
 // @Summary      query user
 // @Tags         user
 // @Security ApiKeyAuth
@@ -500,22 +528,11 @@ func userEmailVCodeHandler(ctx echo.Context) error {
 // @Param        msg  body  Msg_Req_QueryUser  true  "query user condition"
 // @Produce      json
 // @Success      200 {object} Msg_Resp_QueryUser "result"
-// @Router       /api/user/query [post]
+// @Router       /api/user/admin/query [post]
 func userQueryHandler(ctx echo.Context) error {
 	var msg Msg_Req_QueryUser
 	res := &Msg_Resp_QueryUser{}
 	res.Data = []*User{}
-
-	userInfo := http_middleware.GetUserInfo(ctx)
-	if userInfo == nil {
-		res.MetaStatus(-1, "user error")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	if !userInfo.HasOneOfRoles([]string{user_mgr.USER_ROLE_ADMIN, user_mgr.USER_ROLE_READONLY}) {
-		res.MetaStatus(-3, "no permission")
-		return ctx.JSON(http.StatusOK, res)
-	}
 
 	if err := ctx.Bind(&msg); err != nil {
 		res.MetaStatus(-1, "post data error")
@@ -528,11 +545,14 @@ func userQueryHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
+	userInfo := http_middleware.GetUserInfo(ctx)
+
 	for _, um := range userResult.Users {
 		um.Password = ""
-		// if um.Id != userInfo.Id {
-		// 	um.Token = ""
-		// }
+		//for safety reason token only visable to self
+		if um.Id != userInfo.Id {
+			um.Token = ""
+		}
 		msguser := User{}
 		err = copier.Copy(&msguser, &um)
 		if err != nil {
@@ -588,21 +608,10 @@ func userQueryHandler(ctx echo.Context) error {
 // @Param        msg  body  Msg_Req_UpdateUser true  "update"
 // @Produce      json
 // @Success      200 {object} api.API_META_STATUS "result"
-// @Router       /api/user/update [post]
+// @Router       /api/user/admin/update [post]
 func userUpdateHandler(ctx echo.Context) error {
 	var msg Msg_Req_UpdateUser
 	res := &api.API_META_STATUS{}
-
-	userInfo := http_middleware.GetUserInfo(ctx)
-	if userInfo == nil {
-		res.MetaStatus(-1, "user error")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	if !userInfo.HasOneOfRoles([]string{user_mgr.USER_ROLE_ADMIN}) {
-		res.MetaStatus(-5, "no permission")
-		return ctx.JSON(http.StatusOK, res)
-	}
 
 	if err := ctx.Bind(&msg); err != nil {
 		res.MetaStatus(-1, "post data error")
@@ -618,6 +627,7 @@ func userUpdateHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
+	userInfo := http_middleware.GetUserInfo(ctx)
 	id := msg.Filter.Id[0]
 	if msg.Update.Forbidden != nil && *msg.Update.Forbidden && userInfo.Id == id {
 		res.MetaStatus(-6, "can not forbidden self")
@@ -685,21 +695,10 @@ func userUpdateHandler(ctx echo.Context) error {
 // @Param        msg  body  Msg_Req_CreateUser true  "update"
 // @Produce      json
 // @Success      200 {object} api.API_META_STATUS "result"
-// @Router       /api/user/create [post]
+// @Router       /api/user/admin/create [post]
 func userCreateHandler(ctx echo.Context) error {
 	var msg Msg_Req_CreateUser
 	res := &api.API_META_STATUS{}
-
-	userInfo := http_middleware.GetUserInfo(ctx)
-	if userInfo == nil {
-		res.MetaStatus(-1, "user error")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	if !userInfo.HasOneOfRoles([]string{user_mgr.USER_ROLE_ADMIN}) {
-		res.MetaStatus(-5, "no permission")
-		return ctx.JSON(http.StatusOK, res)
-	}
 
 	if err := ctx.Bind(&msg); err != nil {
 		res.MetaStatus(-1, "post data error")
@@ -746,9 +745,7 @@ func userCreateHandler(ctx echo.Context) error {
 		if err != nil {
 			return err
 		}
-
 		// other action
-
 		return nil
 	})
 	if err != nil {
@@ -756,68 +753,6 @@ func userCreateHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
-	res.MetaStatus(1, "success")
-	return ctx.JSON(http.StatusOK, res)
-}
-
-// @Summary      user email check
-// @Description  admin to check email
-// @Security ApiKeyAuth
-// @Tags         user
-// @Accept       json
-// @Param        msg  body  Msg_Req_CheckEmail true  "user email"
-// @Produce      json
-// @Success      200 {object} Msg_Resp_UserInfo "user info"
-// @Router       /api/user/email_check [get]
-func emailCheckHandler(ctx echo.Context) error {
-	var msg Msg_Req_CheckEmail
-	res := &Msg_Resp_UserInfo{}
-
-	userInfo := http_middleware.GetUserInfo(ctx)
-	if userInfo == nil {
-		res.MetaStatus(-1, "user error")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	if err := ctx.Bind(&msg); err != nil {
-		res.MetaStatus(-1, "post data error")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	if !userInfo.HasOneOfRoles([]string{user_mgr.USER_ROLE_ADMIN, user_mgr.USER_ROLE_READONLY}) {
-		res.MetaStatus(-1, "no auth")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	// find user
-	userResult, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, true, true)
-	if err != nil {
-		res.MetaStatus(-4, err.Error())
-		return ctx.JSON(http.StatusOK, res)
-	}
-	if len(userResult.Users) == 0 {
-		res.MetaStatus(-5, "user not exist")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	res.User = &User{}
-	copier.Copy(&res.User, &userResult.Users[0])
-	res.User.Password = ""
-	var roles []string
-	err = json.Unmarshal([]byte(userResult.Users[0].Roles), &roles)
-	if err != nil {
-		res.MetaStatus(-2, "json.Unmarshal user roles error")
-		return ctx.JSON(http.StatusOK, res)
-	}
-	var permissions []string
-	json.Unmarshal([]byte(userResult.Users[0].Permissions), &permissions)
-	if err != nil {
-		res.MetaStatus(-3, "json.Unmarshal user permissions error")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	res.User.Roles = roles
-	res.User.Permissions = permissions
 	res.MetaStatus(1, "success")
 	return ctx.JSON(http.StatusOK, res)
 }

@@ -26,13 +26,6 @@ definitions:
       unixtime:
         type: integer
     type: object
-  api.Msg_Req_CheckEmail:
-    description: Msg_Req_CheckEmail
-    properties:
-      email:
-        description: required
-        type: string
-    type: object
   api.Msg_Req_CreateKv:
     description: Msg_Req_CreateRule
     properties:
@@ -372,18 +365,6 @@ info:
   title: api example
   version: "1.0"
 paths:
-  /api/captcha:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: result
-          schema:
-            $ref: '#/definitions/api.Msg_Resp_Captcha'
-      summary: get captcha
-      tags:
-      - captcha
   /api/health:
     get:
       description: health check
@@ -512,19 +493,7 @@ paths:
       summary: update key value pair
       tags:
       - kv
-  /api/user/auth_config:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: result
-          schema:
-            $ref: '#/definitions/api.Msg_Resp_Auth_Config'
-      summary: get role setting
-      tags:
-      - user
-  /api/user/create:
+  /api/user/admin/create:
     post:
       consumes:
       - application/json
@@ -547,30 +516,76 @@ paths:
       summary: admin create user
       tags:
       - user
-  /api/user/email_check:
-    get:
+  /api/user/admin/query:
+    post:
       consumes:
       - application/json
-      description: admin to check email
       parameters:
-      - description: user email
+      - description: query user condition
         in: body
         name: msg
         required: true
         schema:
-          $ref: '#/definitions/api.Msg_Req_CheckEmail'
+          $ref: '#/definitions/api.Msg_Req_QueryUser'
       produces:
       - application/json
       responses:
         "200":
-          description: user info
+          description: result
           schema:
-            $ref: '#/definitions/api.Msg_Resp_UserInfo'
+            $ref: '#/definitions/api.Msg_Resp_QueryUser'
       security:
       - ApiKeyAuth: []
-      summary: user email check
+      summary: query user
       tags:
       - user
+  /api/user/admin/update:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: update
+        in: body
+        name: msg
+        required: true
+        schema:
+          $ref: '#/definitions/api.Msg_Req_UpdateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: result
+          schema:
+            $ref: '#/definitions/api.API_META_STATUS'
+      security:
+      - ApiKeyAuth: []
+      summary: admin update user
+      tags:
+      - user
+  /api/user/auth_config:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: result
+          schema:
+            $ref: '#/definitions/api.Msg_Resp_Auth_Config'
+      summary: get role setting
+      tags:
+      - user
+  /api/user/captcha:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: result
+          schema:
+            $ref: '#/definitions/api.Msg_Resp_Captcha'
+      summary: get captcha
+      tags:
+      - captcha
   /api/user/email_vcode:
     post:
       consumes:
@@ -627,29 +642,6 @@ paths:
       summary: user login
       tags:
       - user
-  /api/user/query:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: query user condition
-        in: body
-        name: msg
-        required: true
-        schema:
-          $ref: '#/definitions/api.Msg_Req_QueryUser'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: result
-          schema:
-            $ref: '#/definitions/api.Msg_Resp_QueryUser'
-      security:
-      - ApiKeyAuth: []
-      summary: query user
-      tags:
-      - user
   /api/user/register:
     post:
       consumes:
@@ -691,44 +683,6 @@ paths:
           schema:
             $ref: '#/definitions/api.API_META_STATUS'
       summary: user reset password
-      tags:
-      - user
-  /api/user/token_check:
-    get:
-      description: user request api to check token
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: token response
-          schema:
-            $ref: '#/definitions/api.API_META_STATUS'
-      security:
-      - ApiKeyAuth: []
-      summary: user token check
-      tags:
-      - user
-  /api/user/update:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: update
-        in: body
-        name: msg
-        required: true
-        schema:
-          $ref: '#/definitions/api.Msg_Req_UpdateUser'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: result
-          schema:
-            $ref: '#/definitions/api.API_META_STATUS'
-      security:
-      - ApiKeyAuth: []
-      summary: admin update user
       tags:
       - user
 schemes:

@@ -24,25 +24,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/captcha": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "captcha"
-                ],
-                "summary": "get captcha",
-                "responses": {
-                    "200": {
-                        "description": "result",
-                        "schema": {
-                            "$ref": "#/definitions/api.Msg_Resp_Captcha"
-                        }
-                    }
-                }
-            }
-        },
         "/api/health": {
             "get": {
                 "description": "health check",
@@ -253,26 +234,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/user/auth_config": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "get role setting",
-                "responses": {
-                    "200": {
-                        "description": "result",
-                        "schema": {
-                            "$ref": "#/definitions/api.Msg_Resp_Auth_Config"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/user/create": {
+        "/api/user/admin/create": {
             "post": {
                 "security": [
                     {
@@ -310,14 +272,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/user/email_check": {
-            "get": {
+        "/api/user/admin/query": {
+            "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "admin to check email",
                 "consumes": [
                     "application/json"
                 ],
@@ -327,23 +288,99 @@ const docTemplate = `{
                 "tags": [
                     "user"
                 ],
-                "summary": "user email check",
+                "summary": "query user",
                 "parameters": [
                     {
-                        "description": "user email",
+                        "description": "query user condition",
                         "name": "msg",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.Msg_Req_CheckEmail"
+                            "$ref": "#/definitions/api.Msg_Req_QueryUser"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "user info",
+                        "description": "result",
                         "schema": {
-                            "$ref": "#/definitions/api.Msg_Resp_UserInfo"
+                            "$ref": "#/definitions/api.Msg_Resp_QueryUser"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/admin/update": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "admin update user",
+                "parameters": [
+                    {
+                        "description": "update",
+                        "name": "msg",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.Msg_Req_UpdateUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "result",
+                        "schema": {
+                            "$ref": "#/definitions/api.API_META_STATUS"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/auth_config": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "get role setting",
+                "responses": {
+                    "200": {
+                        "description": "result",
+                        "schema": {
+                            "$ref": "#/definitions/api.Msg_Resp_Auth_Config"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/captcha": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "captcha"
+                ],
+                "summary": "get captcha",
+                "responses": {
+                    "200": {
+                        "description": "result",
+                        "schema": {
+                            "$ref": "#/definitions/api.Msg_Resp_Captcha"
                         }
                     }
                 }
@@ -439,44 +476,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/user/query": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "query user",
-                "parameters": [
-                    {
-                        "description": "query user condition",
-                        "name": "msg",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.Msg_Req_QueryUser"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "result",
-                        "schema": {
-                            "$ref": "#/definitions/api.Msg_Resp_QueryUser"
-                        }
-                    }
-                }
-            }
-        },
         "/api/user/register": {
             "post": {
                 "description": "user register",
@@ -543,69 +542,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/api/user/token_check": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "user request api to check token",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "user token check",
-                "responses": {
-                    "200": {
-                        "description": "token response",
-                        "schema": {
-                            "$ref": "#/definitions/api.API_META_STATUS"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/user/update": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "admin update user",
-                "parameters": [
-                    {
-                        "description": "update",
-                        "name": "msg",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.Msg_Req_UpdateUser"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "result",
-                        "schema": {
-                            "$ref": "#/definitions/api.API_META_STATUS"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -648,16 +584,6 @@ const docTemplate = `{
             "properties": {
                 "unixtime": {
                     "type": "integer"
-                }
-            }
-        },
-        "api.Msg_Req_CheckEmail": {
-            "description": "Msg_Req_CheckEmail",
-            "type": "object",
-            "properties": {
-                "email": {
-                    "description": "required",
-                    "type": "string"
                 }
             }
         },
