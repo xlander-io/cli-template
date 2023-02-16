@@ -46,7 +46,7 @@ func Initialize() {
 
 // =====below data can be changed=====
 var ini_admin_email = "admin@coreservice.com"
-var ini_admin_password = "to_be_reset"
+var ini_admin_password = "abc@123"
 var ini_admin_roles = user_mgr.UserRoles
 var ini_admin_permissions = user_mgr.UserPermissions
 

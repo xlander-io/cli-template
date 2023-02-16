@@ -24,7 +24,7 @@ import (
 )
 
 type User struct {
-	Id                      int      `json:"id"`
+	Id                      int64    `json:"id"`
 	Email                   string   `json:"email"`
 	Password                string   `json:"password"`
 	Token                   string   `json:"token"`
@@ -549,10 +549,7 @@ func userQueryHandler(ctx echo.Context) error {
 
 	for _, um := range userResult.Users {
 		um.Password = ""
-		//for safety reason token only visable to self
-		if um.Id != userInfo.Id {
-			um.Token = ""
-		}
+
 		msguser := User{}
 		err = copier.Copy(&msguser, &um)
 		if err != nil {
@@ -592,6 +589,11 @@ func userQueryHandler(ctx echo.Context) error {
 
 		_, isSuperToken := token_mgr.TokenMgr.CheckToken(um.Token)
 		msguser.Is_super_token = isSuperToken
+
+		//for safety reason token only visable to self
+		if msguser.Id != userInfo.Id {
+			msguser.Token = ""
+		}
 
 		res.Data = append(res.Data, &msguser)
 	}
