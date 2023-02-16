@@ -3,6 +3,7 @@ package g_counter_plugin
 import (
 	"fmt"
 
+	"github.com/coreservice-io/cli-template/basic"
 	general_counter "github.com/coreservice-io/general-counter"
 	"github.com/coreservice-io/log"
 	"gorm.io/gorm"
@@ -11,11 +12,15 @@ import (
 var instanceMap = map[string]*general_counter.GeneralCounter{}
 
 func GetInstance() *general_counter.GeneralCounter {
-	return instanceMap["default"]
+	return GetInstance_("default")
 }
 
 func GetInstance_(name string) *general_counter.GeneralCounter {
-	return instanceMap[name]
+	gcounter := instanceMap[name]
+	if gcounter == nil {
+		basic.Logger.Errorln(name + " general counter plugin null")
+	}
+	return gcounter
 }
 
 func Init(gConfig *general_counter.GeneralCounterConfig, logger log.Logger) error {

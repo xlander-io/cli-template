@@ -32,11 +32,15 @@ type Config struct {
 }
 
 func GetInstance() *Cert {
-	return instanceMap["default"]
+	return GetInstance_("default")
 }
 
 func GetInstance_(name string) *Cert {
-	return instanceMap[name]
+	cert := instanceMap[name]
+	if cert == nil {
+		basic.Logger.Errorln(name + " auto_cert plugin null")
+	}
+	return cert
 }
 
 // update_change_callback func(new_crt_content, new_key_content)

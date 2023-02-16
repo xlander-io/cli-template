@@ -3,6 +3,7 @@ package geo_ip_plugin
 import (
 	"fmt"
 
+	"github.com/coreservice-io/cli-template/basic"
 	"github.com/coreservice-io/geo_ip/lib"
 )
 
@@ -13,11 +14,15 @@ type GeoIp struct {
 var instanceMap = map[string]*GeoIp{}
 
 func GetInstance() *GeoIp {
-	return instanceMap["default"]
+	return GetInstance_("default")
 }
 
 func GetInstance_(name string) *GeoIp {
-	return instanceMap[name]
+	geoip := instanceMap[name]
+	if geoip == nil {
+		basic.Logger.Errorln(name + " geoip plugin null")
+	}
+	return geoip
 }
 
 func Init(update_key string, version string, dataset_folder string, logger func(string), err_logger func(string)) error {

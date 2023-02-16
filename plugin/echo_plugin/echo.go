@@ -65,11 +65,15 @@ type EchoServer struct {
 var instanceMap = map[string]*EchoServer{}
 
 func GetInstance() *EchoServer {
-	return instanceMap["default"]
+	return GetInstance_("default")
 }
 
 func GetInstance_(name string) *EchoServer {
-	return instanceMap[name]
+	echo_i := instanceMap[name]
+	if echo_i == nil {
+		basic.Logger.Errorln(name + " echo plugin null")
+	}
+	return echo_i
 }
 
 /*

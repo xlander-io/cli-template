@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/coreservice-io/cli-template/basic"
 	"github.com/coreservice-io/gorm_log"
 	"github.com/coreservice-io/log"
 	"gorm.io/driver/sqlite"
@@ -13,11 +14,15 @@ import (
 var instanceMap = map[string]*gorm.DB{}
 
 func GetInstance() *gorm.DB {
-	return instanceMap["default"]
+	return GetInstance_("default")
 }
 
 func GetInstance_(name string) *gorm.DB {
-	return instanceMap[name]
+	sqlite_i := instanceMap[name]
+	if sqlite_i == nil {
+		basic.Logger.Errorln(name + " sqlite plugin null")
+	}
+	return sqlite_i
 }
 
 type Config struct {

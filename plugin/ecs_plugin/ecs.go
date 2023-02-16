@@ -4,17 +4,22 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/coreservice-io/cli-template/basic"
 	elasticSearch "github.com/olivere/elastic/v7"
 )
 
 var instanceMap = map[string]*elasticSearch.Client{}
 
 func GetInstance() *elasticSearch.Client {
-	return instanceMap["default"]
+	return GetInstance_("default")
 }
 
 func GetInstance_(name string) *elasticSearch.Client {
-	return instanceMap[name]
+	ecs_i := instanceMap[name]
+	if ecs_i == nil {
+		basic.Logger.Errorln(name + " elastic search plugin null")
+	}
+	return ecs_i
 }
 
 /*
@@ -32,9 +37,9 @@ func Init(esConfig *Config) error {
 	return Init_("default", esConfig)
 }
 
-//  Init a new instance.
-//  If only need one instance, use empty name "". Use GetDefaultInstance() to get.
-//  If you need several instance, run Init() with different <name>. Use GetInstance(<name>) to get.
+// Init a new instance.
+// If only need one instance, use empty name "". Use GetDefaultInstance() to get.
+// If you need several instance, run Init() with different <name>. Use GetInstance(<name>) to get.
 func Init_(name string, esConfig *Config) error {
 	if name == "" {
 		name = "default"

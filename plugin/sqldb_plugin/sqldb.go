@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/coreservice-io/cli-template/basic"
 	"github.com/coreservice-io/gorm_log"
 	"github.com/coreservice-io/log"
 	"gorm.io/driver/mysql"
@@ -14,11 +15,15 @@ import (
 var instanceMap = map[string]*gorm.DB{}
 
 func GetInstance() *gorm.DB {
-	return instanceMap["default"]
+	return GetInstance_("default")
 }
 
 func GetInstance_(name string) *gorm.DB {
-	return instanceMap[name]
+	db_i := instanceMap[name]
+	if db_i == nil {
+		basic.Logger.Errorln(name + " sqldb plugin null")
+	}
+	return db_i
 }
 
 /*

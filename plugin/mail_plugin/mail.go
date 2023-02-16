@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/coreservice-io/cli-template/basic"
 	"github.com/jordan-wright/email"
 )
 
@@ -28,11 +29,15 @@ type Sender struct {
 var instanceMap = map[string]*Sender{}
 
 func GetInstance() *Sender {
-	return instanceMap["default"]
+	return GetInstance_("default")
 }
 
 func GetInstance_(name string) *Sender {
-	return instanceMap[name]
+	sender := instanceMap[name]
+	if sender == nil {
+		basic.Logger.Errorln(name + "email plugin null")
+	}
+	return sender
 }
 
 func Init(config *Config) error {

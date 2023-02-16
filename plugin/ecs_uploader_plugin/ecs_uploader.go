@@ -3,6 +3,7 @@ package ecs_uploader_plugin
 import (
 	"fmt"
 
+	"github.com/coreservice-io/cli-template/basic"
 	"github.com/coreservice-io/ecs_uploader/uploader"
 	"github.com/coreservice-io/log"
 )
@@ -10,11 +11,15 @@ import (
 var instanceMap = map[string]*uploader.Uploader{}
 
 func GetInstance() *uploader.Uploader {
-	return instanceMap["default"]
+	return GetInstance_("default")
 }
 
 func GetInstance_(name string) *uploader.Uploader {
-	return instanceMap[name]
+	ecs_uploader_i := instanceMap[name]
+	if ecs_uploader_i == nil {
+		basic.Logger.Errorln(name + " ecs_uploader plugin null")
+	}
+	return ecs_uploader_i
 }
 
 /*
@@ -32,9 +37,9 @@ func Init(esConfig *Config, logger log.Logger) error {
 	return Init_("default", esConfig, logger)
 }
 
-//  Init a new instance.
-//  If only need one instance, use empty name "". Use GetDefaultInstance() to get.
-//  If you need several instance, run Init() with different <name>. Use GetInstance(<name>) to get.
+// Init a new instance.
+// If only need one instance, use empty name "". Use GetDefaultInstance() to get.
+// If you need several instance, run Init() with different <name>. Use GetInstance(<name>) to get.
 func Init_(name string, esConfig *Config, logger log.Logger) error {
 	if name == "" {
 		name = "default"

@@ -3,6 +3,7 @@ package spr_plugin
 import (
 	"fmt"
 
+	"github.com/coreservice-io/cli-template/basic"
 	"github.com/coreservice-io/log"
 	"github.com/coreservice-io/redis_spr"
 )
@@ -10,11 +11,15 @@ import (
 var instanceMap = map[string]*redis_spr.SprJobMgr{}
 
 func GetInstance() *redis_spr.SprJobMgr {
-	return instanceMap["default"]
+	return GetInstance_("default")
 }
 
 func GetInstance_(name string) *redis_spr.SprJobMgr {
-	return instanceMap[name]
+	spr_i := instanceMap[name]
+	if spr_i == nil {
+		basic.Logger.Errorln(name + " spr plugin null")
+	}
+	return spr_i
 }
 
 func Init(redisConfig *redis_spr.RedisConfig, logger log.Logger) error {
@@ -22,8 +27,9 @@ func Init(redisConfig *redis_spr.RedisConfig, logger log.Logger) error {
 }
 
 // Init a new instance.
-//  If only need one instance, use empty name "". Use GetDefaultInstance() to get.
-//  If you need several instance, run Init() with different <name>. Use GetInstance(<name>) to get.
+//
+//	If only need one instance, use empty name "". Use GetDefaultInstance() to get.
+//	If you need several instance, run Init() with different <name>. Use GetInstance(<name>) to get.
 func Init_(name string, redisConfig *redis_spr.RedisConfig, logger log.Logger) error {
 	if name == "" {
 		name = "default"

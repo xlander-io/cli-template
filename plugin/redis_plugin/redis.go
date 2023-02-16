@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/coreservice-io/cli-template/basic"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -18,11 +19,15 @@ type RedisClient struct {
 }
 
 func GetInstance() *RedisClient {
-	return instanceMap["default"]
+	return GetInstance_("default")
 }
 
 func GetInstance_(name string) *RedisClient {
-	return instanceMap[name]
+	redis_i := instanceMap[name]
+	if redis_i == nil {
+		basic.Logger.Errorln(name + " redis plugin null")
+	}
+	return redis_i
 }
 
 type Config struct {
@@ -39,8 +44,9 @@ func Init(redisConfig *Config) error {
 }
 
 // Init a new instance.
-//  If only need one instance, use empty name "". Use GetDefaultInstance() to get.
-//  If you need several instance, run Init() with different <name>. Use GetInstance(<name>) to get.
+//
+//	If only need one instance, use empty name "". Use GetDefaultInstance() to get.
+//	If you need several instance, run Init() with different <name>. Use GetInstance(<name>) to get.
 func Init_(name string, redisConfig *Config) error {
 	if name == "" {
 		name = "default"
