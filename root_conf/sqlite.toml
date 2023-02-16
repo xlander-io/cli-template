@@ -1,5 +1,5 @@
 [token]
-salt = "token_sqlite_salt"
+salt = "clitemplate.com"
 
 [sqlite]
 enable = true

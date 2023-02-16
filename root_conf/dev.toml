@@ -2,7 +2,7 @@
 level = 'DEBU'
 
 [token]
-salt = "token_dev_salt"
+salt = "clitemplate.com"
 
 [http]
 enable = true

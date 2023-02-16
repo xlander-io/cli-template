@@ -2,7 +2,7 @@
 level = 'INFO'
 
 [token]
-salt = "token_default_salt"
+salt = "clitemplate.com"
 
 [http]
 enable = true
