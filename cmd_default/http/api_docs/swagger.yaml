@@ -585,7 +585,7 @@ paths:
             $ref: '#/definitions/api.Msg_Resp_Captcha'
       summary: get captcha
       tags:
-      - captcha
+      - user
   /api/user/email_vcode:
     post:
       consumes:

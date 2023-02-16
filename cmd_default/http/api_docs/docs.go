@@ -373,7 +373,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "captcha"
+                    "user"
                 ],
                 "summary": "get captcha",
                 "responses": {

@@ -179,7 +179,7 @@ func configUser(httpServer *echo.Echo) {
 }
 
 // @Summary      get captcha
-// @Tags         captcha
+// @Tags         user
 // @Produce      json
 // @response 	 200 {object} Msg_Resp_Captcha "result"
 // @Router       /api/user/captcha [get]
