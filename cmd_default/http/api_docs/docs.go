@@ -361,7 +361,7 @@ const docTemplate = `{
                     "200": {
                         "description": "result",
                         "schema": {
-                            "$ref": "#/definitions/api.Msg_Resp_Auth_Config"
+                            "$ref": "#/definitions/api.Msg_Resp_User_Auth_Config"
                         }
                     }
                 }
@@ -911,29 +911,6 @@ const docTemplate = `{
                 }
             }
         },
-        "api.Msg_Resp_Auth_Config": {
-            "type": "object",
-            "properties": {
-                "meta_message": {
-                    "type": "string"
-                },
-                "meta_status": {
-                    "type": "integer"
-                },
-                "permissions": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "roles": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
         "api.Msg_Resp_Captcha": {
             "type": "object",
             "properties": {
@@ -1019,6 +996,29 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/api.User"
+                }
+            }
+        },
+        "api.Msg_Resp_User_Auth_Config": {
+            "type": "object",
+            "properties": {
+                "meta_message": {
+                    "type": "string"
+                },
+                "meta_status": {
+                    "type": "integer"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

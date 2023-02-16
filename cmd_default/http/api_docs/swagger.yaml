@@ -244,21 +244,6 @@ definitions:
         description: required
         type: string
     type: object
-  api.Msg_Resp_Auth_Config:
-    properties:
-      meta_message:
-        type: string
-      meta_status:
-        type: integer
-      permissions:
-        items:
-          type: string
-        type: array
-      roles:
-        items:
-          type: string
-        type: array
-    type: object
   api.Msg_Resp_Captcha:
     properties:
       content:
@@ -306,6 +291,21 @@ definitions:
         type: integer
       token:
         type: string
+    type: object
+  api.Msg_Resp_User_Auth_Config:
+    properties:
+      meta_message:
+        type: string
+      meta_status:
+        type: integer
+      permissions:
+        items:
+          type: string
+        type: array
+      roles:
+        items:
+          type: string
+        type: array
     type: object
   api.Msg_Resp_UserInfo:
     description: Msg_Resp_UserInfo
@@ -570,7 +570,7 @@ paths:
         "200":
           description: result
           schema:
-            $ref: '#/definitions/api.Msg_Resp_Auth_Config'
+            $ref: '#/definitions/api.Msg_Resp_User_Auth_Config'
       summary: get role setting
       tags:
       - user

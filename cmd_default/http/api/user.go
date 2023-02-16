@@ -53,8 +53,8 @@ type Msg_Resp_Captcha struct {
 	Content string `json:"content"`
 }
 
-// @Msg_Resp_Auth_Config
-type Msg_Resp_Auth_Config struct {
+// @Msg_Resp_User_Auth_Config
+type Msg_Resp_User_Auth_Config struct {
 	api.API_META_STATUS
 	Roles       []string `json:"roles"`
 	Permissions []string `json:"permissions"`
@@ -264,10 +264,10 @@ func userEmailVCodeHandler(ctx echo.Context) error {
 // @Summary      get role setting
 // @Tags         user
 // @Produce      json
-// @Success      200 {object} Msg_Resp_Auth_Config "result"
+// @Success      200 {object} Msg_Resp_User_Auth_Config "result"
 // @Router       /api/user/auth_config [get]
 func authConfigHandler(ctx echo.Context) error {
-	res := &Msg_Resp_Auth_Config{}
+	res := &Msg_Resp_User_Auth_Config{}
 	res.MetaStatus(1, "success")
 	res.Roles = user_mgr.UserRoles
 	res.Permissions = user_mgr.UserPermissions
