@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-const DBKV_CACHE_TIME_SECS = 60
+const DBKV_CACHE_TIME_SECS = 300
 
 func SetDBKV_Str(tx *gorm.DB, keystr string, value string, description string) error {
 	tx_result := tx.Table(TABLE_NAME_DBKV).Clauses(clause.OnConflict{UpdateAll: true}).Create(&DBKVModel{Key: keystr, Value: value, Description: description})
@@ -242,7 +242,8 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 	}
 
 	/////
-	sq_result, sq_err := smart_cache.SmartQuery(key, resultHolderAlloc, true, fromCache, updateCache, DBKV_CACHE_TIME_SECS, query, "DBKV Query")
+	sq_result, sq_err := smart_cache.SmartQueryCacheSlow(key, resultHolderAlloc, true, fromCache, updateCache,
+		DBKV_CACHE_TIME_SECS, 60, query, "DBKV Query")
 
 	/////
 	if sq_err != nil {

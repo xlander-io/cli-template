@@ -189,7 +189,7 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 	}
 
 	//
-	sq_result, sq_err := smart_cache.SmartQuery(key, resultHolderAlloc, true, fromCache, updateCache, 300, query, "QueryUser")
+	sq_result, sq_err := smart_cache.SmartQueryCacheSlow(key, resultHolderAlloc, true, fromCache, updateCache, 300, 5, query, "QueryUser")
 
 	//
 	if sq_err != nil {

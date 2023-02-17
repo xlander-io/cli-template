@@ -27,8 +27,8 @@ github.com/coreservice-io/package_client v0.2.1 h1:vZS9xqgGrnTukrqgg4RPsZL4LCqOF
 github.com/coreservice-io/package_client v0.2.1/go.mod h1:bRsrC/4BW/F6CdAXIYHRBZAACKMa30xi+nYz1OLGe3w=
 github.com/coreservice-io/redis_spr v0.1.20 h1:aFrnxXforYRaibkKoZ+n44wMQgYf2KD6Pk+JQuttkoo=
 github.com/coreservice-io/redis_spr v0.1.20/go.mod h1:aqN5LsNLNJIdnkc/cYorN3To+6sm6Oa2AdPSPAtmC+Q=
-github.com/coreservice-io/reference v0.0.9 h1:5V3rO/e0Y6or+jd/rBFM2afqj+cRL2XQPBMxqcuC7p0=
-github.com/coreservice-io/reference v0.0.9/go.mod h1:Kehi3lk+/a+hbK+4o+w4tUGlNdzezjewZ+1uKOkcP4Q=
+github.com/coreservice-io/reference v0.0.10 h1:KLvBcwySaEmHXzi9Tsra5tagdX270waobJXBQYkGnWQ=
+github.com/coreservice-io/reference v0.0.10/go.mod h1:6vV+vS7OMlc0xcxCJiF+LQ+nYzssjPj+KGutnTlLXzE=
 github.com/coreservice-io/safe_go v0.2.1 h1:qUto9DnbMDavMkqkYpJ0wmzlcLFYDWjDQ1E4djLa41g=
 github.com/coreservice-io/safe_go v0.2.1/go.mod h1:AiOjmhqB/dAN6X9jVOzg8EZ4uAWef7Fv0Fl5YR9PDfg=
 github.com/coreservice-io/utils v0.2.3 h1:TKN/Po58a1r1TVwMJw/Szyjh+VESpeA92AzchWhKSgI=
