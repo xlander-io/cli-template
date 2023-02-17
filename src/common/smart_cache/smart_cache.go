@@ -12,17 +12,20 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-// type query_err string
-// func (e query_err) Error() string { return string(e) }
-// type query_nil_err string
-// func (e query_nil_err) Error() string { return string(e) }
+type query_err string
+
+func (e query_err) Error() string { return string(e) }
+
+type query_nil_err string
+
+func (e query_nil_err) Error() string { return string(e) }
 
 const query_err_str = "|query_err|"
 const query_nil_err_str = "|query_nil_err|"
 
 // const CacheNilErr = redis.Nil //won't be used outside module
-var QueryErr = errors.New(query_err_str)
-var QueryNilErr = errors.New(query_nil_err_str)
+const QueryErr = query_err(query_err_str)
+const QueryNilErr = query_nil_err(query_nil_err_str)
 
 // ///////
 const REF_TTL_DELAY_SECS = 600  //add REF_TTL_DELAY_SECS to local ref when set
