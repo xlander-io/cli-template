@@ -23,113 +23,111 @@ func (e query_nil_err) Error() string { return string(e) }
 const query_err_str = "|query_err|"
 const query_nil_err_str = "|query_nil_err|"
 
-const CacheNilErr = redis.Nil //won't be used outside module
+// const CacheNilErr = redis.Nil //won't be used outside module
 const QueryErr = query_err(query_err_str)
 const QueryNilErr = query_nil_err(query_nil_err_str)
+
+// ///////
+const REF_TTL_DELAY_SECS = 600  //add REF_TTL_DELAY_SECS to local ref when set
+const REDIS_TTL_DELAY_SEC = 300 // add REDIS_TTL_DELAY_SEC to redis when set
 
 const QUERY_ERR_SECS = 5 //if query failed (not nil err) , set a temporary mark in redis
 
 // check weather we need do refresh
 // the probobility becomes lager when left seconds close to 0
 // this goal of this function is to avoid big traffic glitch
-func check_ref_ttl_refresh(secleft int64) bool {
-	if secleft == 0 {
-		return true
-	}
+// func check_ref_ttl_refresh(secleft int64) bool {
+// 	if secleft == 0 {
+// 		return true
+// 	}
 
-	if secleft > 0 && secleft <= 3 {
-		if rand.Intn(int(secleft)*5) == 0 {
-			return true
-		}
-	}
-	return false
-}
-
-func check_redis_ttl_refresh(secleft int64) bool {
-	if secleft == 0 {
-		return true
-	}
-	if secleft > 0 && secleft <= 3 {
-		if rand.Intn(int(secleft)*2) == 0 {
-			return true
-		}
-	}
-	return false
-}
-
-func Ref_Get(localRef *reference.Reference, keystr string) (result interface{}) {
-	localvalue, ttl := localRef.Get(keystr)
-	if !check_ref_ttl_refresh(ttl) && localvalue != nil {
-		return localvalue
-	}
-	return nil
-}
-
-// func Ref_Set(localRef *reference.Reference, keystr string, value interface{}) error {
-// 	return Ref_Set_TTL(localRef, keystr, value, local_reference_secs)
+// 	if secleft > 0 && secleft <= 3 {
+// 		if rand.Intn(int(secleft)*5) == 0 {
+// 			return true
+// 		}
+// 	}
+// 	return false
 // }
 
-func Ref_Set_TTL(localRef *reference.Reference, keystr string, value interface{}, ref_ttl_second int64) error {
+// func check_redis_ttl_refresh(secleft int64) bool {
+// 	if secleft == 0 {
+// 		return true
+// 	}
+// 	if secleft > 0 && secleft <= 3 {
+// 		if rand.Intn(int(secleft)*2) == 0 {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
+
+func refGet(localRef *reference.Reference, keystr string) (result interface{}, to_update bool) {
+	localvalue, ttl := localRef.Get(keystr)
+	if ttl <= REF_TTL_DELAY_SECS {
+		return localvalue, true
+	} else {
+		return localvalue, false
+	}
+}
+
+func refSetTTL(localRef *reference.Reference, keystr string, value interface{}, ref_ttl_second int64) error {
 	return localRef.Set(keystr, value, ref_ttl_second)
 }
 
 // //first try from localRef if not found then try from remote redis
-func Redis_Get(ctx context.Context, Redis *redis.ClusterClient, serialization bool, keystr string, result interface{}) error {
-	// 1/5 check ttl
-	if rand.Intn(5) == 0 {
-		ttl, err := Redis.TTL(context.Background(), keystr).Result()
-		// if ttl==-1 means no expire
-
-		// if has expire time
-		if err == nil && ttl != -1 && check_redis_ttl_refresh(int64(ttl.Seconds())) {
-			//need refresh
-			return CacheNilErr
-		}
-	}
+func redisGet(ctx context.Context, Redis *redis.ClusterClient, serialization bool, keystr string, result interface{}) (to_update bool, redis_err error) {
 
 	scmd := Redis.Get(ctx, keystr) //trigger remote redis get
 	r_bytes, err := scmd.Bytes()
 	if err == redis.Nil {
-		return CacheNilErr
+		return true, nil
 	}
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	switch string(r_bytes) {
 	case query_nil_err_str:
-		return QueryNilErr
+		return false, QueryNilErr
 	case query_err_str:
-		return QueryErr
+		return false, QueryErr
 	default:
 	}
 
+	// 1/5 check ttl
+	to_update = false
+	if rand.Intn(5) == 0 {
+		ttl, err := Redis.TTL(context.Background(), keystr).Result()
+		// if ttl==-1 means no expire
+		// if has expire time
+		if err == nil && ttl != -1 && (ttl.Seconds() <= REDIS_TTL_DELAY_SEC) {
+			//need refresh
+			to_update = true
+		}
+	}
+
 	if serialization {
-		return json.Unmarshal(r_bytes, result)
+		return to_update, json.Unmarshal(r_bytes, result)
 	} else {
-		return scmd.Scan(result)
+		return to_update, scmd.Scan(result)
 	}
 }
 
-func RR_Set(ctx context.Context, Redis *redis.ClusterClient, localRef *reference.Reference, serialization bool, keystr string, value interface{}, redis_ttl_second int64, ref_ttl_second int64) error {
-	return RR_Set_TTL(ctx, Redis, localRef, serialization, keystr, value, redis_ttl_second, ref_ttl_second)
+func rrSet(ctx context.Context, Redis *redis.ClusterClient, localRef *reference.Reference, serialization bool, keystr string, value interface{}, redis_ttl_second int64, ref_ttl_second int64) error {
+	return rrSetTTL(ctx, Redis, localRef, serialization, keystr, value, redis_ttl_second, ref_ttl_second)
 }
 
-func RR_SetQueryErr(ctx context.Context, Redis *redis.ClusterClient, keystr string) error {
+func rrSetQueryErr(ctx context.Context, Redis *redis.ClusterClient, keystr string) error {
 	return Redis.Set(ctx, keystr, query_err_str, time.Duration(QUERY_ERR_SECS)*time.Second).Err()
 }
 
-func RR_SetQueryErr_TTL(ctx context.Context, Redis *redis.ClusterClient, keystr string, ttl_second int64) error {
-	return Redis.Set(ctx, keystr, query_err_str, time.Duration(ttl_second)*time.Second).Err()
-}
-
-func RR_SetQueryNilErr_TTL(ctx context.Context, Redis *redis.ClusterClient, keystr string, ttl_second int64) error {
+func rrSetQueryNilErrTTL(ctx context.Context, Redis *redis.ClusterClient, keystr string, ttl_second int64) error {
 	return Redis.Set(ctx, keystr, query_nil_err_str, time.Duration(ttl_second)*time.Second).Err()
 }
 
 // reference set && redis set
 // set both value to both local reference & remote redis
-func RR_Set_TTL(ctx context.Context, Redis *redis.ClusterClient, localRef *reference.Reference, serialization bool, keystr string, value interface{}, redis_ttl_second int64, ref_ttl_second int64) error {
+func rrSetTTL(ctx context.Context, Redis *redis.ClusterClient, localRef *reference.Reference, serialization bool, keystr string, value interface{}, redis_ttl_second int64, ref_ttl_second int64) error {
 	if value == nil {
 		return errors.New("value nil not allowed")
 	}
@@ -164,7 +162,7 @@ func RR_Set_TTL(ctx context.Context, Redis *redis.ClusterClient, localRef *refer
 	}
 }
 
-func RR_Del(ctx context.Context, Redis *redis.ClusterClient, localRef *reference.Reference, keystr string) {
-	localRef.Delete(keystr)
-	Redis.Del(ctx, keystr)
-}
+// func rrDel(ctx context.Context, Redis *redis.ClusterClient, localRef *reference.Reference, keystr string) {
+// 	localRef.Delete(keystr)
+// 	Redis.Del(ctx, keystr)
+// }
