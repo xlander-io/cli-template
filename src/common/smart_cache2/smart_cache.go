@@ -29,34 +29,6 @@ const REDIS_TTL_DELAY_SEC = 300 // add REDIS_TTL_DELAY_SEC to redis when set
 
 const QUERY_ERR_SECS = 5 //if query failed (not nil err) , set a temporary mark in redis
 
-// check weather we need do refresh
-// the probobility becomes lager when left seconds close to 0
-// this goal of this function is to avoid big traffic glitch
-// func check_ref_ttl_refresh(secleft int64) bool {
-// 	if secleft == 0 {
-// 		return true
-// 	}
-
-// 	if secleft > 0 && secleft <= 3 {
-// 		if rand.Intn(int(secleft)*5) == 0 {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
-
-// func check_redis_ttl_refresh(secleft int64) bool {
-// 	if secleft == 0 {
-// 		return true
-// 	}
-// 	if secleft > 0 && secleft <= 3 {
-// 		if rand.Intn(int(secleft)*2) == 0 {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
-
 func refGet(localRef *reference.Reference, keystr string) (result *smartCacheRefElement, to_update bool) {
 	refElement, ttl := localRef.Get(keystr)
 	if refElement == nil {
@@ -97,39 +69,6 @@ func rrSet(ctx context.Context, Redis *redis.ClusterClient, localRef *reference.
 	return rrSetTTL(ctx, Redis, localRef, serialization, keystr, element, redis_ttl_second, ref_ttl_second)
 }
 
-func refSetErr(ctx context.Context, localRef *reference.Reference, keystr string,err error) error {
-	tokenChan := make(chan struct{})
-	tokenChan <- struct{}{}
-	ele := &smartCacheRefElement{
-		Obj:        err,
-		Token_chan: tokenChan,
-	}
-	return refSetTTL(localRef, keystr, ele, QUERY_ERR_SECS+REF_TTL_DELAY_SECS)
-
-}
-
-func refSetErrTTL(ctx context.Context, localRef *reference.Reference, keystr string,err error,ttl_second int64) error {
-	tokenChan := make(chan struct{})
-	tokenChan <- struct{}{}
-	ele := &smartCacheRefElement{
-		Obj:        err,
-		Token_chan: tokenChan,
-	}
-	return refSetTTL(localRef, keystr, ele, ttl_second)
-
-}
-
-// func refSetQueryNilErrTTL(ctx context.Context, localRef *reference.Reference, keystr string, ttl_second int64) error {
-// 	tokenChan := make(chan struct{})
-// 	tokenChan <- struct{}{}
-// 	ele := &smartCacheRefElement{
-// 		Obj:        QueryNilErr,
-// 		Token_chan: tokenChan,
-// 	}
-// 	return refSetTTL(localRef, keystr, ele, QUERY_ERR_SECS)
-
-// }
-
 // reference set && redis set
 // set both value to both local reference & remote redis
 func rrSetTTL(ctx context.Context, Redis *redis.ClusterClient, localRef *reference.Reference, serialization bool, keystr string, element *smartCacheRefElement, redis_ttl_second int64, ref_ttl_second int64) error {
@@ -167,7 +106,23 @@ func rrSetTTL(ctx context.Context, Redis *redis.ClusterClient, localRef *referen
 	}
 }
 
-// func rrDel(ctx context.Context, Redis *redis.ClusterClient, localRef *reference.Reference, keystr string) {
-// 	localRef.Delete(keystr)
-// 	Redis.Del(ctx, keystr)
-// }
+func refSetErr(ctx context.Context, localRef *reference.Reference, keystr string,err error) error {
+	tokenChan := make(chan struct{})
+	tokenChan <- struct{}{}
+	ele := &smartCacheRefElement{
+		Obj:        err,
+		Token_chan: tokenChan,
+	}
+	return refSetTTL(localRef, keystr, ele, QUERY_ERR_SECS+REF_TTL_DELAY_SECS)
+
+}
+
+func refSetErrTTL(ctx context.Context, localRef *reference.Reference, keystr string,err error,ttl_second int64) error {
+	tokenChan := make(chan struct{})
+	tokenChan <- struct{}{}
+	ele := &smartCacheRefElement{
+		Obj:        err,
+		Token_chan: tokenChan,
+	}
+	return refSetTTL(localRef, keystr, ele, ttl_second)
+}
