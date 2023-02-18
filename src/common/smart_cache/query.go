@@ -17,18 +17,18 @@ type QueryCacheTTL struct {
 
 type SlowQuery struct {
 	//return default of : redis_ttl_secs, ref_ttl_secs
-	DefaultTTL func() *QueryCacheTTL
+	CacheTTL func() *QueryCacheTTL
 	//return redis_ttl_secs, ref_ttl_secs,error
 	Query func(resultHolder interface{}) (*QueryCacheTTL, error)
 }
 
-var SlowQueryTTL_ZERO = &QueryCacheTTL{
-	Redis_ttl_secs: 0,
-	Ref_ttl_secs:   0,
-}
-
 var SlowQueryTTL_NOT_FOUND = &QueryCacheTTL{
 	Redis_ttl_secs: 30,
+	Ref_ttl_secs:   5,
+}
+
+var SlowQueryTTL_Default = &QueryCacheTTL{
+	Redis_ttl_secs: 300,
 	Ref_ttl_secs:   5,
 }
 
@@ -44,8 +44,6 @@ var lockMap sync.Map
 func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 	serialization bool, fromCache bool, updateCache bool, slowQuery *SlowQuery,
 	queryDescription string) (interface{}, error) {
-
-	query_cache_ttl := slowQuery.DefaultTTL()
 
 	if fromCache {
 		// try to get from reference
@@ -73,6 +71,7 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 					redis_err := redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, serialization, key, resultHolder)
 					// redis_err => 1.nil,no err 2.ErrQueryNil 3.other err
 					if redis_err == nil { //1.nil,no err
+						query_cache_ttl := slowQuery.CacheTTL()
 						// exist in redis
 						// ref update
 						ele := &smartCacheRefElement{
@@ -119,6 +118,7 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 				redis_err := redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, serialization, key, resultHolder)
 				// redis_err => 1.nil,no err 2.QueryNilErr 3.other err
 				if redis_err == nil { //1.nil,no err
+					query_cache_ttl := slowQuery.CacheTTL()
 					// exist in redis
 					// ref update
 					tokenChan := make(chan struct{}, 1)
