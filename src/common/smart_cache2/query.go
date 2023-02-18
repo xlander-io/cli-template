@@ -35,8 +35,8 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 		if refElement != nil && !to_update_ref { // 1. ref exist and no need to update
 			basic.Logger.Debugln(queryDescription + " SmartQueryCacheSlow hit from reference")
 			switch value := refElement.Obj.(type) {
-			case *error: // if error
-				return nil, *value
+			case error: // if error
+				return nil, value
 			default:
 				return refElement.Obj, nil
 			}
@@ -82,8 +82,8 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 				refElement, _ := refGet(reference_plugin.GetInstance(), key)
 				if refElement != nil {
 					switch value := refElement.Obj.(type) {
-					case *error: // if error
-						return nil, *value
+					case error: // if error
+						return nil, value
 					default:
 						return refElement.Obj, nil
 					}
@@ -197,8 +197,8 @@ func SmartQueryCacheFast(
 		if refElement != nil && !to_update_ref { // 1. ref exist and no need to update
 			basic.Logger.Debugln(queryDescription + " SmartQueryCacheFast hit from reference")
 			switch value := refElement.Obj.(type) {
-			case *error: // if error
-				return nil, *value
+			case error: // if error
+				return nil, value
 			default:
 				return refElement.Obj, nil
 			}
@@ -238,8 +238,8 @@ func SmartQueryCacheFast(
 				refElement, _ := refGet(reference_plugin.GetInstance(), key)
 				if refElement != nil {
 					switch value := refElement.Obj.(type) {
-					case *error: // if error
-						return nil, *value
+					case error: // if error
+						return nil, value
 					default:
 						return refElement.Obj, nil
 					}
