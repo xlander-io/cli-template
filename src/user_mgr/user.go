@@ -129,10 +129,6 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 		}
 	}
 
-	SlowQueryCacheTTL := func() *smart_cache.QueryCacheTTL {
-		return smart_cache.SlowQueryTTL_Default
-	}
-
 	query := func(resultHolder interface{}) (*smart_cache.QueryCacheTTL, error) {
 		queryResult := resultHolder.(*QueryUserResult)
 
@@ -191,13 +187,13 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 		if len(queryResult.Users) == 0 {
 			return smart_cache.SlowQueryTTL_NOT_FOUND, nil // if no record, cache 30 secs in redis and 5 secs in ref
 		} else {
-			return SlowQueryCacheTTL(), nil // if len(record)>0, cache 300 secs in redis and 5 secs in ref
+			return smart_cache.SlowQueryTTL_Default, nil // if len(record)>0, cache 300 secs in redis and 5 secs in ref
 		}
 
 	}
 
 	s_query := &smart_cache.SlowQuery{
-		CacheTTL: SlowQueryCacheTTL,
+		CacheTTL: smart_cache.SlowQueryTTL_Default,
 		Query:    query,
 	}
 

@@ -17,7 +17,7 @@ type QueryCacheTTL struct {
 
 type SlowQuery struct {
 	//return default of : redis_ttl_secs, ref_ttl_secs
-	CacheTTL func() *QueryCacheTTL
+	CacheTTL *QueryCacheTTL
 	//return redis_ttl_secs, ref_ttl_secs,error
 	Query func(resultHolder interface{}) (*QueryCacheTTL, error)
 }
@@ -71,14 +71,13 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 					redis_err := redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, serialization, key, resultHolder)
 					// redis_err => 1.nil,no err 2.ErrQueryNil 3.other err
 					if redis_err == nil { //1.nil,no err
-						query_cache_ttl := slowQuery.CacheTTL()
 						// exist in redis
 						// ref update
 						ele := &smartCacheRefElement{
 							Obj:        resultHolder,
 							Token_chan: refElement.Token_chan, // use exist chan
 						}
-						refSetTTL(reference_plugin.GetInstance(), key, ele, query_cache_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
+						refSetTTL(reference_plugin.GetInstance(), key, ele, slowQuery.CacheTTL.Ref_ttl_secs+REF_TTL_DELAY_SECS)
 					} else if redis_err == ErrQueryNil { //2.ErrQueryNil
 						// try from origin (example form db)
 						// must update ref and redis
@@ -118,7 +117,6 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 				redis_err := redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, serialization, key, resultHolder)
 				// redis_err => 1.nil,no err 2.QueryNilErr 3.other err
 				if redis_err == nil { //1.nil,no err
-					query_cache_ttl := slowQuery.CacheTTL()
 					// exist in redis
 					// ref update
 					tokenChan := make(chan struct{}, 1)
@@ -127,7 +125,7 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 						Obj:        resultHolder,
 						Token_chan: tokenChan, // a new chan
 					}
-					refSetTTL(reference_plugin.GetInstance(), key, ele, query_cache_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
+					refSetTTL(reference_plugin.GetInstance(), key, ele, slowQuery.CacheTTL.Ref_ttl_secs+REF_TTL_DELAY_SECS)
 
 					//close and delete chan after ref set
 					close(lc.(chan struct{}))

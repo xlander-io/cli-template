@@ -203,6 +203,11 @@ type DBKVQueryResults struct {
 	TotalCount int64
 }
 
+var query_dbkv_cache_ttl = &smart_cache.QueryCacheTTL{
+	Redis_ttl_secs: DBKV_CACHE_TIME_SECS,
+	Ref_ttl_secs:   30,
+}
+
 func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCache bool) (*DBKVQueryResults, error) {
 
 	//gen_key
@@ -220,13 +225,6 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 	}
 
 	/////
-	SlowQueryCacheTTL := func() *smart_cache.QueryCacheTTL {
-		return &smart_cache.QueryCacheTTL{
-			Redis_ttl_secs: DBKV_CACHE_TIME_SECS,
-			Ref_ttl_secs:   30,
-		}
-	}
-
 	query := func(resultHolder interface{}) (*smart_cache.QueryCacheTTL, error) {
 		queryResults := resultHolder.(*DBKVQueryResults)
 
@@ -249,12 +247,12 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 			return smart_cache.SlowQueryTTL_NOT_FOUND, nil
 
 		} else {
-			return SlowQueryCacheTTL(), nil
+			return query_dbkv_cache_ttl, nil
 		}
 	}
 
 	s_query := &smart_cache.SlowQuery{
-		CacheTTL: SlowQueryCacheTTL,
+		CacheTTL: query_dbkv_cache_ttl,
 		Query:    query,
 	}
 
