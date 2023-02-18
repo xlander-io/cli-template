@@ -220,8 +220,14 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 	}
 
 	/////
-	// return (redisCacheSec int64, refCacheSec int64, err error), if err!=nil,ignore redisCacheSec and refCacheSec
-	query := func(resultHolder interface{}) (int64,int64,error) {
+	SlowQueryDefaultTTL := func() *smart_cache.QueryCacheTTL {
+		return &smart_cache.QueryCacheTTL{
+			Redis_ttl_secs: DBKV_CACHE_TIME_SECS,
+			Ref_ttl_secs:   30,
+		}
+	}
+
+	query := func(resultHolder interface{}) (*smart_cache.QueryCacheTTL, error) {
 		queryResults := resultHolder.(*DBKVQueryResults)
 
 		query := tx.Table(TABLE_NAME_DBKV)
@@ -236,19 +242,24 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 
 		err := query.Find(&queryResults.Kv).Error
 		if err != nil {
-			return 0,0,err
+			return smart_cache.SlowQueryTTL_ZERO, err
 		}
 
-		if len(queryResults.Kv)==0{
-			return 30,5,nil
-		}else{
-			return DBKV_CACHE_TIME_SECS,60,nil
+		if len(queryResults.Kv) == 0 {
+			return smart_cache.SlowQueryTTL_NOT_FOUND, nil
+
+		} else {
+			return SlowQueryDefaultTTL(), nil
 		}
 	}
 
+	s_query := &smart_cache.SlowQuery{
+		DefaultTTL: SlowQueryDefaultTTL,
+		Query:      query,
+	}
+
 	/////
-	sq_result, sq_err := smart_cache.SmartQueryCacheSlow(key, resultHolderAlloc, true, fromCache, updateCache,
-		 60, query, "DBKV Query")
+	sq_result, sq_err := smart_cache.SmartQueryCacheSlow(key, resultHolderAlloc, true, fromCache, updateCache, s_query, "DBKV Query")
 
 	/////
 	if sq_err != nil {
