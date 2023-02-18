@@ -24,7 +24,7 @@ func Initialize() {
 			return errors.New("db already initialized")
 		}
 
-		if err != smart_cache.QueryNilErr {
+		if err != smart_cache.ErrQueryNil {
 			return errors.New("db error:" + err.Error())
 		}
 

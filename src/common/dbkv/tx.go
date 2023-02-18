@@ -192,7 +192,7 @@ func GetDBKV(tx *gorm.DB, id *int64, key *string, fromCache bool, updateCache bo
 	}
 
 	if result.TotalCount == 0 {
-		return nil, smart_cache.QueryNilErr
+		return nil, smart_cache.ErrQueryNil
 	}
 
 	return result.Kv[0], nil
