@@ -220,7 +220,8 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 	}
 
 	/////
-	query := func(resultHolder interface{}) error {
+	// return (redisCacheSec int64, refCacheSec int64, err error), if err!=nil,ignore redisCacheSec and refCacheSec
+	query := func(resultHolder interface{}) (int64,int64,error) {
 		queryResults := resultHolder.(*DBKVQueryResults)
 
 		query := tx.Table(TABLE_NAME_DBKV)
@@ -235,15 +236,19 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 
 		err := query.Find(&queryResults.Kv).Error
 		if err != nil {
-			return err
+			return 0,0,err
 		}
 
-		return nil
+		if len(queryResults.Kv)==0{
+			return 30,5,nil
+		}else{
+			return DBKV_CACHE_TIME_SECS,60,nil
+		}
 	}
 
 	/////
 	sq_result, sq_err := smart_cache.SmartQueryCacheSlow(key, resultHolderAlloc, true, fromCache, updateCache,
-		DBKV_CACHE_TIME_SECS, 60, query, "DBKV Query")
+		 60, query, "DBKV Query")
 
 	/////
 	if sq_err != nil {

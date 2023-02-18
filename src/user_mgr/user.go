@@ -129,8 +129,8 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 		}
 	}
 
-	// ///
-	query := func(resultHolder interface{}) error {
+	// return (redisCacheSec int64, refCacheSec int64, err error), if err!=nil,ignore redisCacheSec and refCacheSec
+	query := func(resultHolder interface{}) (int64,int64,error) {
 		queryResult := resultHolder.(*QueryUserResult)
 
 		query := tx.Table(TABLE_NAME_USER)
@@ -164,7 +164,7 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 
 		err := query.Find(&queryResult.Users).Error
 		if err != nil {
-			return err
+			return 0,0,err
 		}
 
 		// equip the related info
@@ -185,11 +185,16 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 			}
 		}
 
-		return nil
+		if len(queryResult.Users)==0{
+			return 30,5,nil // if no record, cache 30 secs in redis and 5 secs in ref
+		}else{
+			return 300,5 ,nil// if len(record)>0, cache 300 secs in redis and 5 secs in ref
+		}
+
 	}
 
 	//
-	sq_result, sq_err := smart_cache.SmartQueryCacheSlow(key, resultHolderAlloc, true, fromCache, updateCache, 300, 5, query, "QueryUser")
+	sq_result, sq_err := smart_cache.SmartQueryCacheSlow(key, resultHolderAlloc, true, fromCache, updateCache,5, query, "QueryUser")
 
 	//
 	if sq_err != nil {

@@ -18,13 +18,11 @@ type smartCacheRefElement struct {
 var lockMap sync.Map
 
 func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
-	serialization bool, fromCache bool, updateCache bool,
-	redisCacheTTLSecs int64, refCacheTTLSecs int64,
-	slowQuery func(resultHolder interface{}) error,
+	serialization bool, fromCache bool, updateCache bool,defaultRefCacheSecs int64,
+	slowQuery func(resultHolder interface{}) (int64,int64,error),
 	queryDescription string) (interface{}, error) {
 
-	redisCacheTTLSecs = redisCacheTTLSecs + REDIS_TTL_DELAY_SEC
-	refCacheTTLSecs = refCacheTTLSecs + REF_TTL_DELAY_SECS
+	refCacheTTLSecs := defaultRefCacheSecs + REF_TTL_DELAY_SECS
 
 	if fromCache {
 		// try to get from reference
@@ -62,7 +60,7 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 					} else if redis_err == ErrQueryNil { //2.ErrQueryNil
 						// try from origin (example form db)
 						// must update ref and redis
-						smartQuery_getOrigin(key, resultHolder, serialization, true, redisCacheTTLSecs, refCacheTTLSecs, slowQuery, queryDescription)
+						smartQuery_getOrigin(key, resultHolder, serialization, true, slowQuery, queryDescription)
 					} else { //3.other err
 						// cache other error in ref for a short time
 						refSetErr(context.Background(), reference_plugin.GetInstance(), key, redis_err)
@@ -117,7 +115,7 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 
 					// try from origin (example form db)
 					// must update ref and redis
-					origin_q_err := smartQuery_getOrigin(key, resultHolder, serialization, true, redisCacheTTLSecs, refCacheTTLSecs, slowQuery, queryDescription)
+					origin_q_err := smartQuery_getOrigin(key, resultHolder, serialization, true, slowQuery, queryDescription)
 
 					//close and delete chan after ref set
 					close(lc.(chan struct{}))
@@ -142,7 +140,7 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 	} else {
 		// after cache miss ,try from remote database
 		resultHolder := resultHolderAlloc()
-		origin_q_err := smartQuery_getOrigin(key, resultHolder, serialization, updateCache, redisCacheTTLSecs, refCacheTTLSecs, slowQuery, queryDescription)
+		origin_q_err := smartQuery_getOrigin(key, resultHolder, serialization, updateCache, slowQuery, queryDescription)
 		if origin_q_err != nil {
 			return nil, origin_q_err
 		} else {
@@ -153,11 +151,10 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 
 func smartQuery_getOrigin(key string, resultHolder interface{},
 	serialization bool, updateCache bool,
-	redisCacheTTLSecs int64, refCacheTTLSecs int64,
-	slowQuery func(resultHolder interface{}) error,
+	slowQuery func(resultHolder interface{}) (int64,int64,error),
 	queryDescription string) error {
 	basic.Logger.Debugln(queryDescription, " SmartQueryCacheSlow try from db query")
-	query_err := slowQuery(resultHolder)
+	redisCacheTTLSecs , refCacheTTLSecs ,query_err := slowQuery(resultHolder)
 	if query_err != nil {
 		refSetErr(context.Background(), reference_plugin.GetInstance(), key, query_err)
 		return query_err
@@ -170,7 +167,7 @@ func smartQuery_getOrigin(key string, resultHolder interface{},
 				Obj:        resultHolder,
 				Token_chan: tokenChan,
 			}
-			rrSet(context.Background(), redis_plugin.GetInstance().ClusterClient, reference_plugin.GetInstance(), serialization, key, ele, redisCacheTTLSecs, refCacheTTLSecs)
+			rrSet(context.Background(), redis_plugin.GetInstance().ClusterClient, reference_plugin.GetInstance(), serialization, key, ele, redisCacheTTLSecs+ REDIS_TTL_DELAY_SEC, refCacheTTLSecs+ REF_TTL_DELAY_SECS)
 		}
 		return nil
 	}
