@@ -247,15 +247,15 @@ func SmartQueryCacheFast(
 				resultHolder := resultHolderAlloc()
 				query_err := fastQuery(resultHolder)
 				if query_err != nil {
-					close(lc.(chan struct{})) //just close to unlock chan
-					lockMap.Delete(key)
 					// cache other error in ref for a short time
 					refSetErr(context.Background(), reference_plugin.GetInstance(), key, query_err)
+
+					close(lc.(chan struct{})) //just close to unlock chan
+					lockMap.Delete(key)
 					return nil, query_err
 
 				} else {
-					close(lc.(chan struct{})) //just close to unlock chan
-					lockMap.Delete(key)
+					
 					// ref must update
 					tokenChan := make(chan struct{}, 1)
 					tokenChan <- struct{}{}
@@ -264,6 +264,9 @@ func SmartQueryCacheFast(
 						Token_chan: tokenChan, // a new chan
 					}
 					refSetTTL(reference_plugin.GetInstance(), key, ele, refCacheTTLSecs)
+
+					close(lc.(chan struct{})) //just close to unlock chan
+					lockMap.Delete(key)
 					return resultHolder, nil
 				}
 			}
