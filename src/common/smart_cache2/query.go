@@ -10,8 +10,6 @@ import (
 	"github.com/coreservice-io/cli-template/plugin/reference_plugin"
 )
 
-const UPDATE_REF_CHAN_TTL_SECS = 300
-
 type smartCacheRefElement struct {
 	Obj        interface{}
 	Token_chan chan struct{}
@@ -52,7 +50,7 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 					// get from redis
 					basic.Logger.Debugln(queryDescription, " SmartQueryCacheSlow try from redis")
 					redis_err := redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, serialization, key, resultHolder)
-					// redis_err => 1.nil,no err 2.QueryNilErr 3.other err
+					// redis_err => 1.nil,no err 2.ErrQueryNil 3.other err
 					if redis_err == nil { //1.nil,no err
 						// exist in redis
 						// ref update
@@ -61,7 +59,7 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 							Token_chan: refElement.Token_chan, // use exist chan
 						}
 						refSetTTL(reference_plugin.GetInstance(), key, ele, refCacheTTLSecs)
-					} else if redis_err == QueryNilErr { //2.QueryNilErr
+					} else if redis_err == ErrQueryNil { //2.ErrQueryNil
 						// try from origin (example form db)
 						// must update ref and redis
 						smartQuery_getOrigin(key, resultHolder, serialization, true, redisCacheTTLSecs, refCacheTTLSecs, slowQuery, queryDescription)
@@ -115,7 +113,7 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 					lockMap.Delete(key)
 					return resultHolder, nil
 
-				} else if redis_err == QueryNilErr { //2.QueryNilErr
+				} else if redis_err == ErrQueryNil { //2.ErrQueryNil
 
 					// try from origin (example form db)
 					// must update ref and redis
@@ -262,7 +260,7 @@ func SmartQueryCacheFast(
 					return nil, query_err
 
 				} else {
-					
+
 					// ref must update
 					tokenChan := make(chan struct{}, 1)
 					tokenChan <- struct{}{}

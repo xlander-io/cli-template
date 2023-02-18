@@ -11,19 +11,12 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-// type query_err string
-// func (e query_err) Error() string { return string(e) }
-// type query_nil_err string
-// func (e query_nil_err) Error() string { return string(e) }
-
 const query_err_str = "|query_err|"
 const query_nil_err_str = "|query_nil_err|"
 
-// const CacheNilErr = redis.Nil //won't be used outside module
-var QueryErr = errors.New(query_err_str)
-var QueryNilErr = errors.New(query_nil_err_str)
+var ErrQuery = errors.New(query_err_str)
+var ErrQueryNil = errors.New(query_nil_err_str)
 
-// ///////
 const REF_TTL_DELAY_SECS = 600  //add REF_TTL_DELAY_SECS to local ref when set
 const REDIS_TTL_DELAY_SEC = 300 // add REDIS_TTL_DELAY_SEC to redis when set
 
@@ -52,7 +45,7 @@ func redisGet(ctx context.Context, Redis *redis.ClusterClient, serialization boo
 	scmd := Redis.Get(ctx, keystr) //trigger remote redis get
 	r_bytes, err := scmd.Bytes()
 	if err == redis.Nil {
-		return QueryNilErr
+		return ErrQueryNil
 	}
 	if err != nil {
 		return err
@@ -106,7 +99,7 @@ func rrSetTTL(ctx context.Context, Redis *redis.ClusterClient, localRef *referen
 	}
 }
 
-func refSetErr(ctx context.Context, localRef *reference.Reference, keystr string,err error) error {
+func refSetErr(ctx context.Context, localRef *reference.Reference, keystr string, err error) error {
 	tokenChan := make(chan struct{})
 	tokenChan <- struct{}{}
 	ele := &smartCacheRefElement{
@@ -115,14 +108,4 @@ func refSetErr(ctx context.Context, localRef *reference.Reference, keystr string
 	}
 	return refSetTTL(localRef, keystr, ele, QUERY_ERR_SECS+REF_TTL_DELAY_SECS)
 
-}
-
-func refSetErrTTL(ctx context.Context, localRef *reference.Reference, keystr string,err error,ttl_second int64) error {
-	tokenChan := make(chan struct{})
-	tokenChan <- struct{}{}
-	ele := &smartCacheRefElement{
-		Obj:        err,
-		Token_chan: tokenChan,
-	}
-	return refSetTTL(localRef, keystr, ele, ttl_second)
 }
