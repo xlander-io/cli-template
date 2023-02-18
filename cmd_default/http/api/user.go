@@ -450,6 +450,9 @@ func userRegisterHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
+	//refresh cache
+	user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, true, true)
+
 	res.Token = newUser.Token
 	res.MetaStatus(1, "success")
 	return ctx.JSON(http.StatusOK, res)
@@ -754,6 +757,9 @@ func userCreateHandler(ctx echo.Context) error {
 		res.MetaStatus(-10, err.Error())
 		return ctx.JSON(http.StatusOK, res)
 	}
+
+	//refresh cache
+	user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, true, true)
 
 	res.MetaStatus(1, "success")
 	return ctx.JSON(http.StatusOK, res)
