@@ -93,7 +93,7 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 					return nil, errors.New("SmartQueryCacheSlow query ref nil error")
 				}
 
-			} else { // only 1 query enter blow
+			} else { // only 1 query enter below
 				resultHolder := resultHolderAlloc()
 				// get from redis
 				basic.Logger.Debugln(queryDescription, " SmartQueryCacheSlow try from redis")
@@ -109,6 +109,8 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 						Token_chan: tokenChan, // a new chan
 					}
 					refSetTTL(reference_plugin.GetInstance(), key, ele, refCacheTTLSecs)
+
+					//close and delete chan after ref set
 					close(lc.(chan struct{}))
 					lockMap.Delete(key)
 					return resultHolder, nil
@@ -118,6 +120,8 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 					// try from origin (example form db)
 					// must update ref and redis
 					origin_q_err := smartQuery_getOrigin(key, resultHolder, serialization, true, redisCacheTTLSecs, refCacheTTLSecs, slowQuery, queryDescription)
+
+					//close and delete chan after ref set
 					close(lc.(chan struct{}))
 					lockMap.Delete(key)
 					if origin_q_err != nil {
@@ -129,6 +133,8 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 				} else { //3.other err
 					// cache other error in ref for a short time
 					refSetErr(context.Background(), reference_plugin.GetInstance(), key, redis_err)
+
+					//close and delete chan after ref set
 					close(lc.(chan struct{}))
 					lockMap.Delete(key)
 					return nil, redis_err
@@ -242,7 +248,7 @@ func SmartQueryCacheFast(
 					basic.Logger.Errorln("SmartQueryCacheFast ref nothing found which may caused by too short ref ttl which seems all most impossible")
 					return nil, errors.New("SmartQueryCacheFast query error")
 				}
-			} else { // only 1 query enter blow
+			} else { // only 1 query enter below
 				//try from origin
 				resultHolder := resultHolderAlloc()
 				query_err := fastQuery(resultHolder)
@@ -250,6 +256,7 @@ func SmartQueryCacheFast(
 					// cache other error in ref for a short time
 					refSetErr(context.Background(), reference_plugin.GetInstance(), key, query_err)
 
+					//close and delete chan after ref set
 					close(lc.(chan struct{})) //just close to unlock chan
 					lockMap.Delete(key)
 					return nil, query_err
@@ -265,6 +272,7 @@ func SmartQueryCacheFast(
 					}
 					refSetTTL(reference_plugin.GetInstance(), key, ele, refCacheTTLSecs)
 
+					//close and delete chan after ref set
 					close(lc.(chan struct{})) //just close to unlock chan
 					lockMap.Delete(key)
 					return resultHolder, nil
