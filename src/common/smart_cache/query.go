@@ -175,6 +175,8 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 						Obj:        resultHolder,
 						Token_chan: tokenChan, // a new chan
 					}
+				} else {
+					ele.Obj = resultHolder
 				}
 
 				refSetTTL(reference_plugin.GetInstance(), key, ele, s_cache_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
@@ -288,6 +290,8 @@ func SmartQueryCacheFast(
 						Obj:        resultHolder,
 						Token_chan: tokenChan, // a new chan
 					}
+				} else {
+					ele.Obj = resultHolder
 				}
 
 				refSetTTL(reference_plugin.GetInstance(), key, ele, f_cache_ttl_secs+REF_TTL_DELAY_SECS)
