@@ -8,6 +8,7 @@ import (
 	"github.com/coreservice-io/cli-template/basic"
 	"github.com/coreservice-io/cli-template/plugin/redis_plugin"
 	"github.com/coreservice-io/cli-template/plugin/reference_plugin"
+	"github.com/go-redis/redis/v8"
 )
 
 type QueryCacheTTL struct {
@@ -74,16 +75,15 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 					resultHolder := resultHolderAlloc()
 					// get from redis
 					basic.Logger.Debugln(queryDescription, " SmartQueryCacheSlow try from redis")
-					redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder)
+					redis_get_err := redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder)
 
-					if resultHolder.Found {
+					if redis_get_err == nil {
 						// exist in redis
 						// ref update
 						refElement.Obj = resultHolder
 						refSetTTL(reference_plugin.GetInstance(), key, refElement, slowQuery.CacheTTL.Ref_ttl_secs+REF_TTL_DELAY_SECS)
 					} else {
-
-						if resultHolder.Err == nil {
+						if redis_get_err == redis.Nil {
 							//redis:no error just not found
 							//try from origin (example form db)
 							query_ttl := slowQuery.Query(resultHolder)
@@ -137,19 +137,21 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 					Token_chan: tokenChan, // a new chan
 				}
 				///////
-				redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder)
-				if resultHolder.Err != nil {
-					//redis err
-					refSetTTL(reference_plugin.GetInstance(), key, ele, QUERY_ERR_REF_TTL_SECS+REF_TTL_DELAY_SECS)
+				redis_get_err := redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder)
+
+				if redis_get_err == nil {
+					//redis found
+					refSetTTL(reference_plugin.GetInstance(), key, ele, slowQuery.CacheTTL.Ref_ttl_secs+REF_TTL_DELAY_SECS)
 				} else {
-					if resultHolder.Found {
-						//redis found
-						refSetTTL(reference_plugin.GetInstance(), key, ele, slowQuery.CacheTTL.Ref_ttl_secs+REF_TTL_DELAY_SECS)
-					} else {
-						//redis no err but not found , try from slowquery(e.g db)
+					if redis_get_err == redis.Nil {
+						//no err but not found
 						query_ttl := slowQuery.Query(resultHolder)
 						refSetTTL(reference_plugin.GetInstance(), key, ele, query_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
 						redisSet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder, query_ttl.Redis_ttl_secs)
+
+					} else {
+						//other error
+						refSetTTL(reference_plugin.GetInstance(), key, ele, QUERY_ERR_REF_TTL_SECS+REF_TTL_DELAY_SECS)
 					}
 				}
 

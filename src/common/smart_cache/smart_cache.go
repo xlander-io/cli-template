@@ -35,26 +35,16 @@ func refSetTTL(localRef *reference.Reference, keystr string, element *smartCache
 }
 
 // return to_update bool
-func redisGet(ctx context.Context, Redis *redis.ClusterClient, keystr string, q_result *QueryResult) {
+func redisGet(ctx context.Context, Redis *redis.ClusterClient, keystr string, q_result *QueryResult) error {
 
 	scmd := Redis.Get(ctx, keystr)
 	r_bytes, err := scmd.Bytes()
 
 	if err != nil {
-		if err == redis.Nil {
-			q_result.Found = false
-			q_result.Err = nil
-		} else {
-			q_result.Found = false
-			q_result.Err = err
-		}
-	} else {
-		json_err := json.Unmarshal(r_bytes, q_result)
-		if json_err != nil {
-			q_result.Err = json_err
-			q_result.Found = false
-		}
+		return err
 	}
+
+	return json.Unmarshal(r_bytes, q_result)
 }
 
 func redisSet(ctx context.Context, Redis *redis.ClusterClient, keystr string, q_result *QueryResult, redis_ttl_second int64) error {
