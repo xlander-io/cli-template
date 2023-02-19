@@ -151,6 +151,9 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 
 					} else {
 						//other error
+						// as this is the case that : there is no reference and redis error happens
+						// just put an error in the reference
+						resultHolder.Err = redis_get_err
 						refSetTTL(reference_plugin.GetInstance(), key, ele, QUERY_ERR_REF_TTL_SECS+REF_TTL_DELAY_SECS)
 					}
 				}
