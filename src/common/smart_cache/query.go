@@ -82,6 +82,7 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 						refElement.Obj = resultHolder
 						refSetTTL(reference_plugin.GetInstance(), key, refElement, slowQuery.CacheTTL.Ref_ttl_secs+REF_TTL_DELAY_SECS)
 					} else {
+
 						if resultHolder.Err == nil {
 							//redis:no error just not found
 							//try from origin (example form db)
@@ -90,11 +91,15 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 								refElement.Obj = resultHolder
 								refSetTTL(reference_plugin.GetInstance(), key, refElement, query_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
 								redisSet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder, query_ttl.Redis_ttl_secs)
+							} else {
+								//db error ,redis no record , just keep old local ttl longer
+								//nothing to do but keep old local reference longer with some secs ,e.g: retry redis after some secs
+								refSetTTL(reference_plugin.GetInstance(), key, refElement, QUERY_ERR_REF_TTL_SECS+REF_TTL_DELAY_SECS)
 							}
 						} else {
 							//redis:other err
-							//nothing to do but keep old local reference longer with 5 secs ,e.g: retry redis after 5 secs
-							refSetTTL(reference_plugin.GetInstance(), key, refElement, 5+REF_TTL_DELAY_SECS)
+							//nothing to do but keep old local reference longer with some secs ,e.g: retry redis after some secs
+							refSetTTL(reference_plugin.GetInstance(), key, refElement, QUERY_ERR_REF_TTL_SECS+REF_TTL_DELAY_SECS)
 						}
 					}
 				}()
@@ -156,7 +161,28 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 	} else {
 		// after cache miss ,try from remote database
 		resultHolder := resultHolderAlloc()
-		slowQuery.Query(resultHolder)
+
+		s_cache_ttl := slowQuery.Query(resultHolder)
+
+		if updateCache {
+			if resultHolder.Err == nil {
+
+				ele, _ := refGet(reference_plugin.GetInstance(), key)
+				if ele == nil {
+					tokenChan := make(chan struct{}, 1)
+					tokenChan <- struct{}{}
+					ele = &smartCacheRefElement{
+						Obj:        resultHolder,
+						Token_chan: tokenChan, // a new chan
+					}
+				}
+
+				refSetTTL(reference_plugin.GetInstance(), key, ele, s_cache_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
+				redisSet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder, s_cache_ttl.Redis_ttl_secs)
+			}
+			//// else nothing ,as cache should kept old values
+		}
+
 		return resultHolder
 	}
 }
@@ -197,8 +223,8 @@ func SmartQueryCacheFast(
 						refElement.Obj = resultHolder
 						refSetTTL(reference_plugin.GetInstance(), key, refElement, refCacheTTLSecs+REF_TTL_DELAY_SECS)
 					} else {
-						//nothing to do but keep old local ref 5 secs longer
-						refSetTTL(reference_plugin.GetInstance(), key, refElement, 5+REF_TTL_DELAY_SECS)
+						//nothing to do but keep old local ref some secs longer
+						refSetTTL(reference_plugin.GetInstance(), key, refElement, QUERY_ERR_REF_TTL_SECS+REF_TTL_DELAY_SECS)
 					}
 				}()
 				return refElement.Obj.(*QueryResult)
@@ -247,7 +273,27 @@ func SmartQueryCacheFast(
 		//after cache miss ,try from remote database
 		basic.Logger.Debugln(queryDescription, " SmartQueryCacheFast try from fast query")
 		resultHolder := resultHolderAlloc()
-		fastQuery(resultHolder)
+
+		f_cache_ttl_secs := fastQuery(resultHolder)
+
+		if updateRefCache {
+
+			if resultHolder.Err == nil {
+
+				ele, _ := refGet(reference_plugin.GetInstance(), key)
+				if ele == nil {
+					tokenChan := make(chan struct{}, 1)
+					tokenChan <- struct{}{}
+					ele = &smartCacheRefElement{
+						Obj:        resultHolder,
+						Token_chan: tokenChan, // a new chan
+					}
+				}
+
+				refSetTTL(reference_plugin.GetInstance(), key, ele, f_cache_ttl_secs+REF_TTL_DELAY_SECS)
+			}
+			//nothing changes
+		}
 		return resultHolder
 	}
 }
