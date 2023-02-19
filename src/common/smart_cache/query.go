@@ -144,13 +144,13 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 					refSetTTL(reference_plugin.GetInstance(), key, ele, slowQuery.CacheTTL.Ref_ttl_secs+REF_TTL_DELAY_SECS)
 				} else {
 					if redis_get_err == redis.Nil {
-						//no err but not found
+						//redis no err but not found
 						query_ttl := slowQuery.Query(resultHolder)
 						refSetTTL(reference_plugin.GetInstance(), key, ele, query_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
 						redisSet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder, query_ttl.Redis_ttl_secs)
 
 					} else {
-						//other error
+						// redis other error
 						// as this is the case that : there is no reference and redis error happens
 						// just put an error in the reference
 						resultHolder.Err = redis_get_err
