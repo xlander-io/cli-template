@@ -2,7 +2,6 @@ package smart_cache
 
 import (
 	"context"
-	"errors"
 	"sync"
 
 	"github.com/coreservice-io/cli-template/basic"
@@ -19,7 +18,8 @@ type QueryCacheTTL struct {
 type QueryResult struct {
 	Result_holder interface{}
 	Found         bool
-	Err           error
+	Has_err       bool
+	Err_str       string
 }
 
 type SlowQuery struct {
@@ -87,7 +87,7 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 							//redis:no error just not found
 							//try from origin (example form db)
 							query_ttl := slowQuery.Query(resultHolder)
-							if resultHolder.Err == nil {
+							if !resultHolder.Has_err {
 								refElement.Obj = resultHolder
 								refSetTTL(reference_plugin.GetInstance(), key, refElement, query_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
 								redisSet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder, query_ttl.Redis_ttl_secs)
@@ -120,7 +120,8 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 					return &QueryResult{
 						Result_holder: resultHolderAlloc(),
 						Found:         false,
-						Err:           errors.New("SmartQueryCacheSlow ref nothing found,all most impossible"),
+						Has_err:       true,
+						Err_str:       "SmartQueryCacheSlow ref nothing found,all most impossible",
 					}
 				}
 
@@ -153,7 +154,8 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 						// redis other error
 						// as this is the case that : there is no reference and redis error happens
 						// just put an error in the reference
-						resultHolder.Err = redis_get_err
+						resultHolder.Has_err = true
+						resultHolder.Err_str = redis_get_err.Error()
 						refSetTTL(reference_plugin.GetInstance(), key, ele, QUERY_ERR_REF_TTL_SECS+REF_TTL_DELAY_SECS)
 					}
 				}
@@ -170,7 +172,7 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 		s_cache_ttl := slowQuery.Query(resultHolder)
 
 		if updateCache {
-			if resultHolder.Err == nil {
+			if !resultHolder.Has_err {
 
 				ele, _ := refGet(reference_plugin.GetInstance(), key)
 				if ele == nil {
@@ -226,7 +228,7 @@ func SmartQueryCacheFast(
 					resultHolder := resultHolderAlloc()
 					refCacheTTLSecs := fastQuery(resultHolder)
 
-					if resultHolder.Err == nil {
+					if !resultHolder.Has_err {
 						refElement.Obj = resultHolder
 						refSetTTL(reference_plugin.GetInstance(), key, refElement, refCacheTTLSecs+REF_TTL_DELAY_SECS)
 					} else {
@@ -253,7 +255,8 @@ func SmartQueryCacheFast(
 					return &QueryResult{
 						Result_holder: resultHolderAlloc(),
 						Found:         false,
-						Err:           errors.New("SmartQueryCacheFast ref nothing found,all most impossible"),
+						Has_err:       true,
+						Err_str:       "SmartQueryCacheFast ref nothing found,all most impossible",
 					}
 				}
 
@@ -285,7 +288,7 @@ func SmartQueryCacheFast(
 
 		if updateRefCache {
 
-			if resultHolder.Err == nil {
+			if !resultHolder.Has_err {
 
 				ele, _ := refGet(reference_plugin.GetInstance(), key)
 				if ele == nil {

@@ -128,8 +128,9 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 				Users:       []*UserModel{},
 				Total_count: 0,
 			},
-			Found: false,
-			Err:   nil,
+			Found:   false,
+			Has_err: false,
+			Err_str: "",
 		}
 	}
 
@@ -168,7 +169,8 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 
 		err := query.Find(&queryResult.Users).Error
 		if err != nil {
-			resultHolder.Err = err
+			resultHolder.Has_err = true
+			resultHolder.Err_str = err.Error()
 			resultHolder.Found = false
 			return smart_cache.SlowQueryTTL_ERR
 		}
@@ -206,8 +208,8 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 
 	//
 	sq_result := smart_cache.SmartQueryCacheSlow(key, fromCache, updateCache, "QueryUser", resultHolderAlloc, s_query)
-	if sq_result.Err != nil {
-		return nil, sq_result.Err
+	if sq_result.Has_err {
+		return nil, errors.New(sq_result.Err_str)
 	} else {
 		return sq_result.Result_holder.(*QueryUserResult), nil
 	}
