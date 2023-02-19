@@ -94,7 +94,7 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 							} else {
 								//db error ,redis no record , just keep old local ttl longer
 								//nothing to do but keep old local reference longer with some secs ,e.g: retry redis after some secs
-								refSetTTL(reference_plugin.GetInstance(), key, refElement, QUERY_ERR_REF_TTL_SECS+REF_TTL_DELAY_SECS)
+								refSetTTL(reference_plugin.GetInstance(), key, refElement, query_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
 							}
 						} else {
 							//redis:other err
@@ -147,8 +147,12 @@ func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDesc
 					if redis_get_err == redis.Nil {
 						//redis no err but not found
 						query_ttl := slowQuery.Query(resultHolder)
-						refSetTTL(reference_plugin.GetInstance(), key, ele, query_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
-						redisSet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder, query_ttl.Redis_ttl_secs)
+						if !resultHolder.Has_err {
+							refSetTTL(reference_plugin.GetInstance(), key, ele, query_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
+							redisSet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder, query_ttl.Redis_ttl_secs)
+						} else {
+							refSetTTL(reference_plugin.GetInstance(), key, ele, query_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
+						}
 
 					} else {
 						// redis other error
