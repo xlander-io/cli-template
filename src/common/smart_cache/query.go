@@ -15,11 +15,22 @@ type QueryCacheTTL struct {
 	Ref_ttl_secs   int64
 }
 
+type QueryResult struct {
+	Result_holder interface{}
+	Found         bool
+	Err           error
+}
+
 type SlowQuery struct {
 	//return default of : redis_ttl_secs, ref_ttl_secs
 	CacheTTL *QueryCacheTTL
 	//return redis_ttl_secs, ref_ttl_secs,error
-	Query func(resultHolder interface{}) (*QueryCacheTTL, error)
+	Query func(qResult *QueryResult) *QueryCacheTTL
+}
+
+var SlowQueryTTL_Default = &QueryCacheTTL{
+	Redis_ttl_secs: 300,
+	Ref_ttl_secs:   5,
 }
 
 var SlowQueryTTL_NOT_FOUND = &QueryCacheTTL{
@@ -27,8 +38,8 @@ var SlowQueryTTL_NOT_FOUND = &QueryCacheTTL{
 	Ref_ttl_secs:   5,
 }
 
-var SlowQueryTTL_Default = &QueryCacheTTL{
-	Redis_ttl_secs: 300,
+var SlowQueryTTL_ERR = &QueryCacheTTL{
+	Redis_ttl_secs: 5,
 	Ref_ttl_secs:   5,
 }
 
@@ -41,9 +52,8 @@ type smartCacheRefElement struct {
 
 var lockMap sync.Map
 
-func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
-	serialization bool, fromCache bool, updateCache bool, slowQuery *SlowQuery,
-	queryDescription string) (interface{}, error) {
+func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDescription string,
+	resultHolderAlloc func() *QueryResult, slowQuery *SlowQuery) *QueryResult {
 
 	if fromCache {
 		// try to get from reference
@@ -51,12 +61,8 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 
 		if refElement != nil && !to_update_ref { // 1. ref exist and no need to update
 			basic.Logger.Debugln(queryDescription + " SmartQueryCacheSlow hit from reference")
-			switch value := refElement.Obj.(type) {
-			case error: // if error
-				return nil, value
-			default:
-				return refElement.Obj, nil
-			}
+			return refElement.Obj.(*QueryResult)
+
 		} else if refElement != nil && to_update_ref { //2. ref exist and need update
 			select {
 			case <-refElement.Token_chan: //get run token
@@ -68,154 +74,113 @@ func SmartQueryCacheSlow(key string, resultHolderAlloc func() interface{},
 					resultHolder := resultHolderAlloc()
 					// get from redis
 					basic.Logger.Debugln(queryDescription, " SmartQueryCacheSlow try from redis")
-					redis_err := redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, serialization, key, resultHolder)
-					// redis_err => 1.nil,no err 2.ErrQueryNil 3.other err
-					if redis_err == nil { //1.nil,no err
+					redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder)
+
+					if resultHolder.Found {
 						// exist in redis
 						// ref update
-						ele := &smartCacheRefElement{
-							Obj:        resultHolder,
-							Token_chan: refElement.Token_chan, // use exist chan
+						refElement.Obj = resultHolder
+						refSetTTL(reference_plugin.GetInstance(), key, refElement, slowQuery.CacheTTL.Ref_ttl_secs+REF_TTL_DELAY_SECS)
+					} else {
+						if resultHolder.Err == nil {
+							//redis:no error just not found
+							//try from origin (example form db)
+							query_ttl := slowQuery.Query(resultHolder)
+							if resultHolder.Err == nil {
+								refElement.Obj = resultHolder
+								refSetTTL(reference_plugin.GetInstance(), key, refElement, query_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
+								redisSet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder, query_ttl.Redis_ttl_secs)
+							}
+						} else {
+							//redis:other err
+							//nothing to do but keep old local reference longer with 5 secs ,e.g: retry redis after 5 secs
+							refSetTTL(reference_plugin.GetInstance(), key, refElement, 5+REF_TTL_DELAY_SECS)
 						}
-						refSetTTL(reference_plugin.GetInstance(), key, ele, slowQuery.CacheTTL.Ref_ttl_secs+REF_TTL_DELAY_SECS)
-					} else if redis_err == ErrQueryNil { //2.ErrQueryNil
-						// try from origin (example form db)
-						// must update ref and redis
-						slowQueryGetOrigin(key, resultHolder, serialization, true, slowQuery, queryDescription)
-					} else { //3.other err
-						// cache other error in ref for a short time
-						refSetErr(context.Background(), reference_plugin.GetInstance(), key, redis_err)
 					}
 				}()
-				return refElement.Obj, nil
+				return refElement.Obj.(*QueryResult)
 			default:
-				return refElement.Obj, nil
+				return refElement.Obj.(*QueryResult)
 			}
-		} else { //3. ref not exist
+		} else {
+			//3. ref not exist
 			lc, loaded := lockMap.LoadOrStore(key, make(chan struct{}, 1))
-
 			if loaded { //most query enter this filed
 				<-lc.(chan struct{}) //all processes unblock when chan closed
 				refElement, _ := refGet(reference_plugin.GetInstance(), key)
 				if refElement != nil {
-					switch value := refElement.Obj.(type) {
-					case error: // if error
-						return nil, value
-					default:
-						return refElement.Obj, nil
-					}
+					return refElement.Obj.(*QueryResult)
 				} else {
-					//ref nothing found which may caused by too short ref ttl which seems all most impossible
 					basic.Logger.Errorln("SmartQueryCacheSlow ref nothing found which may caused by too short ref ttl which seems all most impossible")
-					return nil, errors.New("SmartQueryCacheSlow query ref nil error")
+					return &QueryResult{
+						Result_holder: resultHolderAlloc(),
+						Found:         false,
+						Err:           errors.New("SmartQueryCacheSlow ref nothing found,all most impossible"),
+					}
 				}
 
-			} else { // only 1 query enter below
-				resultHolder := resultHolderAlloc()
+			} else {
+				// only 1 query enter below
 				// get from redis
 				basic.Logger.Debugln(queryDescription, " SmartQueryCacheSlow try from redis")
-				redis_err := redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, serialization, key, resultHolder)
-				// redis_err => 1.nil,no err 2.QueryNilErr 3.other err
-				if redis_err == nil { //1.nil,no err
-					// exist in redis
-					// ref update
-					tokenChan := make(chan struct{}, 1)
-					tokenChan <- struct{}{}
-					ele := &smartCacheRefElement{
-						Obj:        resultHolder,
-						Token_chan: tokenChan, // a new chan
-					}
-					refSetTTL(reference_plugin.GetInstance(), key, ele, slowQuery.CacheTTL.Ref_ttl_secs+REF_TTL_DELAY_SECS)
-
-					//close and delete chan after ref set
-					close(lc.(chan struct{}))
-					lockMap.Delete(key)
-					return resultHolder, nil
-
-				} else if redis_err == ErrQueryNil { //2.ErrQueryNil
-
-					// try from origin (example form db)
-					// must update ref and redis
-					origin_q_err := slowQueryGetOrigin(key, resultHolder, serialization, true, slowQuery, queryDescription)
-
-					//close and delete chan after ref set
-					close(lc.(chan struct{}))
-					lockMap.Delete(key)
-					if origin_q_err != nil {
-						return nil, origin_q_err
-					} else {
-						return resultHolder, nil
-					}
-
-				} else { //3.other err
-					// cache other error in ref for a short time
-					refSetErr(context.Background(), reference_plugin.GetInstance(), key, redis_err)
-
-					//close and delete chan after ref set
-					close(lc.(chan struct{}))
-					lockMap.Delete(key)
-					return nil, redis_err
+				//////
+				resultHolder := resultHolderAlloc()
+				tokenChan := make(chan struct{}, 1)
+				tokenChan <- struct{}{}
+				ele := &smartCacheRefElement{
+					Obj:        resultHolder,
+					Token_chan: tokenChan, // a new chan
 				}
+				///////
+				redisGet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder)
+				if resultHolder.Err != nil {
+					//redis err
+					refSetTTL(reference_plugin.GetInstance(), key, ele, QUERY_ERR_REF_TTL_SECS+REF_TTL_DELAY_SECS)
+				} else {
+					if resultHolder.Found {
+						//redis found
+						refSetTTL(reference_plugin.GetInstance(), key, ele, slowQuery.CacheTTL.Ref_ttl_secs+REF_TTL_DELAY_SECS)
+					} else {
+						//redis no err but not found , try from slowquery(e.g db)
+						query_ttl := slowQuery.Query(resultHolder)
+						refSetTTL(reference_plugin.GetInstance(), key, ele, query_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
+						redisSet(context.Background(), redis_plugin.GetInstance().ClusterClient, key, resultHolder, query_ttl.Redis_ttl_secs)
+					}
+				}
+
+				close(lc.(chan struct{}))
+				lockMap.Delete(key)
+				return resultHolder
 			}
 		}
 	} else {
 		// after cache miss ,try from remote database
 		resultHolder := resultHolderAlloc()
-		origin_q_err := slowQueryGetOrigin(key, resultHolder, serialization, updateCache, slowQuery, queryDescription)
-		if origin_q_err != nil {
-			return nil, origin_q_err
-		} else {
-			return resultHolder, nil
-		}
+		slowQuery.Query(resultHolder)
+		return resultHolder
 	}
 }
 
-func slowQueryGetOrigin(key string, resultHolder interface{},
-	serialization bool, updateCache bool, slowQuery *SlowQuery, queryDescription string) error {
-	basic.Logger.Debugln(queryDescription, " SmartQueryCacheSlow try from db query")
-
-	query_ttl, query_err := slowQuery.Query(resultHolder)
-
-	if query_err != nil {
-		refSetErr(context.Background(), reference_plugin.GetInstance(), key, query_err)
-		return query_err
-	} else {
-		if updateCache {
-			// ref and redis update
-			tokenChan := make(chan struct{}, 1)
-			tokenChan <- struct{}{}
-			ele := &smartCacheRefElement{
-				Obj:        resultHolder,
-				Token_chan: tokenChan,
-			}
-			rrSet(context.Background(), redis_plugin.GetInstance().ClusterClient, reference_plugin.GetInstance(), serialization, key,
-				ele, query_ttl.Redis_ttl_secs+REDIS_TTL_DELAY_SEC, query_ttl.Ref_ttl_secs+REF_TTL_DELAY_SECS)
-		}
-		return nil
-	}
-}
+///////////////////////////////////////////////////////////////////////////////////
 
 // fastQuery usually is a redis query
 func SmartQueryCacheFast(
 	key string,
-	resultHolderAlloc func() interface{},
+	resultHolderAlloc func() *QueryResult,
 	fromRefCache bool,
 	updateRefCache bool,
-	fastQuery func(resultHolder interface{}) (int64, error), //return ref_ttl_secs ,err
-	queryDescription string) (interface{}, error) {
+	fastQuery func(resultHolder *QueryResult) int64, //return ref_ttl_secs ,err
+	queryDescription string) *QueryResult {
 
 	if fromRefCache {
 		// try to get from reference
 		refElement, to_update_ref := refGet(reference_plugin.GetInstance(), key)
 
 		if refElement != nil && !to_update_ref { // 1. ref exist and no need to update
+
 			basic.Logger.Debugln(queryDescription + " SmartQueryCacheFast hit from reference")
-			switch value := refElement.Obj.(type) {
-			case error: // if error
-				return nil, value
-			default:
-				return refElement.Obj, nil
-			}
+			return refElement.Obj.(*QueryResult)
+
 		} else if refElement != nil && to_update_ref { //2. ref exist and need update
 			select {
 			case <-refElement.Token_chan: //get run token
@@ -226,96 +191,63 @@ func SmartQueryCacheFast(
 
 					//try from origin
 					resultHolder := resultHolderAlloc()
-					refCacheTTLSecs, query_err := fastQuery(resultHolder)
-					if query_err != nil {
-						// cache other error in ref for a short time
-						refSetErr(context.Background(), reference_plugin.GetInstance(), key, query_err)
-					} else {
-						// ref must update
-						ele := &smartCacheRefElement{
-							Obj:        resultHolder,
-							Token_chan: refElement.Token_chan, // use exist chan
-						}
-						refSetTTL(reference_plugin.GetInstance(), key, ele, refCacheTTLSecs+REF_TTL_DELAY_SECS)
-					}
+					refCacheTTLSecs := fastQuery(resultHolder)
 
+					if resultHolder.Err == nil {
+						refElement.Obj = resultHolder
+						refSetTTL(reference_plugin.GetInstance(), key, refElement, refCacheTTLSecs+REF_TTL_DELAY_SECS)
+					} else {
+						//nothing to do but keep old local ref 5 secs longer
+						refSetTTL(reference_plugin.GetInstance(), key, refElement, 5+REF_TTL_DELAY_SECS)
+					}
 				}()
-				return refElement.Obj, nil
+				return refElement.Obj.(*QueryResult)
 			default:
-				return refElement.Obj, nil
+				return refElement.Obj.(*QueryResult)
 			}
-		} else { //3. ref not exist
+		} else {
+
+			//3. ref not exist
 			lc, loaded := lockMap.LoadOrStore(key, make(chan struct{}, 1))
 			if loaded { //most query enter this filed
 				<-lc.(chan struct{}) //unblock when chan closed
-				// get from ref
+
 				refElement, _ := refGet(reference_plugin.GetInstance(), key)
 				if refElement != nil {
-					switch value := refElement.Obj.(type) {
-					case error: // if error
-						return nil, value
-					default:
-						return refElement.Obj, nil
-					}
+					return refElement.Obj.(*QueryResult)
 				} else {
-					//ref nothing found which may caused by too short ref ttl which seems all most impossible
 					basic.Logger.Errorln("SmartQueryCacheFast ref nothing found which may caused by too short ref ttl which seems all most impossible")
-					return nil, errors.New("SmartQueryCacheFast query error")
+					return &QueryResult{
+						Result_holder: resultHolderAlloc(),
+						Found:         false,
+						Err:           errors.New("SmartQueryCacheFast ref nothing found,all most impossible"),
+					}
 				}
-			} else { // only 1 query enter below
+
+			} else {
+				// only 1 query enter below
 				//try from origin
 				resultHolder := resultHolderAlloc()
-				refCacheTTLSecs, query_err := fastQuery(resultHolder)
-				if query_err != nil {
-					// cache other error in ref for a short time
-					refSetErr(context.Background(), reference_plugin.GetInstance(), key, query_err)
-
-					//close and delete chan after ref set
-					close(lc.(chan struct{})) //just close to unlock chan
-					lockMap.Delete(key)
-					return nil, query_err
-
-				} else {
-					// ref must update
-					tokenChan := make(chan struct{}, 1)
-					tokenChan <- struct{}{}
-					ele := &smartCacheRefElement{
-						Obj:        resultHolder,
-						Token_chan: tokenChan, // a new chan
-					}
-					refSetTTL(reference_plugin.GetInstance(), key, ele, refCacheTTLSecs+REF_TTL_DELAY_SECS)
-
-					//close and delete chan after ref set
-					close(lc.(chan struct{})) //just close to unlock chan
-					lockMap.Delete(key)
-					return resultHolder, nil
-				}
-			}
-		}
-	} else {
-
-		//after cache miss ,try from remote database
-		basic.Logger.Debugln(queryDescription, " SmartQueryCacheFast try from fast query")
-		///
-		resultHolder := resultHolderAlloc()
-		refCacheTTLSecs, query_err := fastQuery(resultHolder)
-		if query_err != nil {
-			refSetErr(context.Background(), reference_plugin.GetInstance(), key, query_err)
-			return nil, query_err
-		} else {
-			if updateRefCache {
-				// ref and redis update
 				tokenChan := make(chan struct{}, 1)
 				tokenChan <- struct{}{}
 				ele := &smartCacheRefElement{
 					Obj:        resultHolder,
-					Token_chan: tokenChan,
+					Token_chan: tokenChan, // a new chan
 				}
+
+				refCacheTTLSecs := fastQuery(resultHolder)
 				refSetTTL(reference_plugin.GetInstance(), key, ele, refCacheTTLSecs+REF_TTL_DELAY_SECS)
+
+				close(lc.(chan struct{})) //just close to unlock chan
+				lockMap.Delete(key)
+				return resultHolder
 			}
-			return resultHolder, nil
 		}
-
+	} else {
+		//after cache miss ,try from remote database
+		basic.Logger.Debugln(queryDescription, " SmartQueryCacheFast try from fast query")
+		resultHolder := resultHolderAlloc()
+		fastQuery(resultHolder)
+		return resultHolder
 	}
-
 }

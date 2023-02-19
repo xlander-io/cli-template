@@ -122,15 +122,20 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 	key := redis_plugin.GetInstance().GenKey(ck.String())
 
 	// ///
-	resultHolderAlloc := func() interface{} {
-		return &QueryUserResult{
-			Users:       []*UserModel{},
-			Total_count: 0,
+	resultHolderAlloc := func() *smart_cache.QueryResult {
+		return &smart_cache.QueryResult{
+			Result_holder: &QueryUserResult{
+				Users:       []*UserModel{},
+				Total_count: 0,
+			},
+			Found: false,
+			Err:   nil,
 		}
 	}
 
-	query := func(resultHolder interface{}) (*smart_cache.QueryCacheTTL, error) {
-		queryResult := resultHolder.(*QueryUserResult)
+	query := func(resultHolder *smart_cache.QueryResult) *smart_cache.QueryCacheTTL {
+
+		queryResult := resultHolder.Result_holder.(*QueryUserResult)
 
 		query := tx.Table(TABLE_NAME_USER)
 		if id != nil {
@@ -163,7 +168,9 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 
 		err := query.Find(&queryResult.Users).Error
 		if err != nil {
-			return nil, err
+			resultHolder.Err = err
+			resultHolder.Found = false
+			return smart_cache.SlowQueryTTL_ERR
 		}
 
 		// equip the related info
@@ -185,11 +192,11 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 		}
 
 		if len(queryResult.Users) == 0 {
-			return smart_cache.SlowQueryTTL_NOT_FOUND, nil // if no record, cache 30 secs in redis and 5 secs in ref
+			return smart_cache.SlowQueryTTL_NOT_FOUND
 		} else {
-			return smart_cache.SlowQueryTTL_Default, nil // if len(record)>0, cache 300 secs in redis and 5 secs in ref
+			resultHolder.Found = true
+			return smart_cache.SlowQueryTTL_Default
 		}
-
 	}
 
 	s_query := &smart_cache.SlowQuery{
@@ -198,12 +205,11 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 	}
 
 	//
-	sq_result, sq_err := smart_cache.SmartQueryCacheSlow(key, resultHolderAlloc, true, fromCache, updateCache, s_query, "QueryUser")
-
-	//
-	if sq_err != nil {
-		return nil, sq_err
+	sq_result := smart_cache.SmartQueryCacheSlow(key, fromCache, updateCache, "QueryUser", resultHolderAlloc, s_query)
+	if sq_result.Err != nil {
+		return nil, sq_result.Err
 	} else {
-		return sq_result.(*QueryUserResult), nil
+		return sq_result.Result_holder.(*QueryUserResult), nil
 	}
+
 }

@@ -176,6 +176,8 @@ func GetDBKV_Float64(tx *gorm.DB, key string) (float64, error) {
 	return float64_result, nil
 }
 
+// when error !=nil ,result is nil
+// when error == nil , result may be nil or not nil
 func GetDBKV(tx *gorm.DB, id *int64, key *string, fromCache bool, updateCache bool) (*DBKVModel, error) {
 
 	var result *DBKVQueryResults
@@ -192,7 +194,7 @@ func GetDBKV(tx *gorm.DB, id *int64, key *string, fromCache bool, updateCache bo
 	}
 
 	if result.TotalCount == 0 {
-		return nil, smart_cache.ErrQueryNil
+		return nil, nil
 	}
 
 	return result.Kv[0], nil
@@ -217,16 +219,22 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 	key := redis_plugin.GetInstance().GenKey(ck.String())
 
 	/////
-	resultHolderAlloc := func() interface{} {
-		return &DBKVQueryResults{
-			Kv:         []*DBKVModel{},
-			TotalCount: 0,
+	resultHolderAlloc := func() *smart_cache.QueryResult {
+
+		return &smart_cache.QueryResult{
+			Result_holder: &DBKVQueryResults{
+				Kv:         []*DBKVModel{},
+				TotalCount: 0,
+			},
+			Found: false,
+			Err:   nil,
 		}
 	}
 
 	/////
-	query := func(resultHolder interface{}) (*smart_cache.QueryCacheTTL, error) {
-		queryResults := resultHolder.(*DBKVQueryResults)
+	query := func(resultHolder *smart_cache.QueryResult) *smart_cache.QueryCacheTTL {
+
+		queryResults := resultHolder.Result_holder.(*DBKVQueryResults)
 
 		query := tx.Table(TABLE_NAME_DBKV)
 		if id != nil {
@@ -240,14 +248,15 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 
 		err := query.Find(&queryResults.Kv).Error
 		if err != nil {
-			return nil, err
+			resultHolder.Err = err
+			return smart_cache.SlowQueryTTL_ERR
 		}
 
 		if len(queryResults.Kv) == 0 {
-			return smart_cache.SlowQueryTTL_NOT_FOUND, nil
-
+			return smart_cache.SlowQueryTTL_NOT_FOUND
 		} else {
-			return query_dbkv_cache_ttl, nil
+			resultHolder.Found = true
+			return query_dbkv_cache_ttl
 		}
 	}
 
@@ -257,13 +266,13 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 	}
 
 	/////
-	sq_result, sq_err := smart_cache.SmartQueryCacheSlow(key, resultHolderAlloc, true, fromCache, updateCache, s_query, "DBKV Query")
+	sq_result := smart_cache.SmartQueryCacheSlow(key, fromCache, updateCache, "DBKV Query", resultHolderAlloc, s_query)
 
 	/////
-	if sq_err != nil {
-		return nil, sq_err
+	if sq_result.Err != nil {
+		return nil, sq_result.Err
 	} else {
-		return sq_result.(*DBKVQueryResults), nil
+		return sq_result.Result_holder.(*DBKVQueryResults), nil
 	}
 
 }

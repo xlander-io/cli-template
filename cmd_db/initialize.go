@@ -6,7 +6,6 @@ import (
 	"github.com/coreservice-io/cli-template/basic"
 	"github.com/coreservice-io/cli-template/plugin/sqldb_plugin"
 	"github.com/coreservice-io/cli-template/src/common/dbkv"
-	"github.com/coreservice-io/cli-template/src/common/smart_cache"
 	"github.com/coreservice-io/cli-template/src/user_mgr"
 	"gorm.io/gorm"
 )
@@ -18,14 +17,13 @@ func Initialize() {
 	key := "db_initialized"
 	err := sqldb_plugin.GetInstance().Transaction(func(tx *gorm.DB) error {
 
-		_, err := dbkv.GetDBKV(tx, nil, &key, false, false)
-
-		if err == nil {
-			return errors.New("db already initialized")
+		value, err := dbkv.GetDBKV(tx, nil, &key, false, false)
+		if err != nil {
+			return errors.New("db error" + err.Error())
 		}
 
-		if err != smart_cache.ErrQueryNil {
-			return errors.New("db error:" + err.Error())
+		if value != nil {
+			return errors.New("db already initialized")
 		}
 
 		// create your own data here which won't change in the future
