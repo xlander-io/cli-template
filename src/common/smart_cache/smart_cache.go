@@ -49,13 +49,10 @@ func redisGet(ctx context.Context, Redis *redis.ClusterClient, keystr string, q_
 			q_result.Err = err
 		}
 	} else {
-		json_err := json.Unmarshal(r_bytes, q_result.Result_holder)
+		json_err := json.Unmarshal(r_bytes, q_result)
 		if json_err != nil {
 			q_result.Err = json_err
 			q_result.Found = false
-		} else {
-			q_result.Err = nil
-			q_result.Found = true
 		}
 	}
 }
