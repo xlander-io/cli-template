@@ -254,12 +254,13 @@ func QueryDBKV(tx *gorm.DB, id *int64, keys *[]string, fromCache bool, updateCac
 			return smart_cache.SlowQueryTTL_ERR
 		}
 
-		if len(queryResults.Kv) == 0 {
+		if queryResults.TotalCount == 0 {
 			return smart_cache.SlowQueryTTL_NOT_FOUND
-		} else {
-			resultHolder.Found = true
-			return query_dbkv_cache_ttl
 		}
+
+		resultHolder.Found = true
+		return query_dbkv_cache_ttl
+
 	}
 
 	s_query := &smart_cache.SlowQuery{

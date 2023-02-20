@@ -175,6 +175,10 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 			return smart_cache.SlowQueryTTL_ERR
 		}
 
+		if queryResult.Total_count == 0 {
+			return smart_cache.SlowQueryTTL_NOT_FOUND
+		}
+
 		// equip the related info
 		for _, user := range queryResult.Users {
 
@@ -193,12 +197,9 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 			}
 		}
 
-		if len(queryResult.Users) == 0 {
-			return smart_cache.SlowQueryTTL_NOT_FOUND
-		} else {
-			resultHolder.Found = true
-			return smart_cache.SlowQueryTTL_Default
-		}
+		resultHolder.Found = true
+		return smart_cache.SlowQueryTTL_Default
+
 	}
 
 	s_query := &smart_cache.SlowQuery{
