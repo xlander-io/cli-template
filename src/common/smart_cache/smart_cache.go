@@ -9,7 +9,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-const REF_TTL_DELAY_SECS = 600 //add REF_TTL_DELAY_SECS to local ref when set
+const REF_TTL_DELAY_SECS = 5 //add REF_TTL_DELAY_SECS to local ref when set
 
 const QUERY_ERR_REF_TTL_SECS = 5   //the ref tempory store secs when query error
 const QUERY_ERR_REDIS_TTL_SECS = 5 //the redis tempory store secs when query error
