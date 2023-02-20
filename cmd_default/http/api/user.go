@@ -317,10 +317,14 @@ func userInfoHandler(ctx echo.Context) error {
 
 	// ip
 	ipInfo, err := geo_ip_plugin.GetInstance().GetInfo(userInfo.Register_ipv4)
-	if err != nil {
+	if err == nil {
 		res.User.Register_continent_code = ipInfo.Continent_code
 		res.User.Register_country_code = ipInfo.Country_code
 		res.User.Register_region = ipInfo.Region
+	} else {
+		res.User.Register_continent_code = "ZZ"
+		res.User.Register_country_code = "ZZ"
+		res.User.Register_region = "ZZ"
 	}
 
 	res.MetaStatus(1, "success")
