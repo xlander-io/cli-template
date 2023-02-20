@@ -80,8 +80,6 @@ func configKv(httpServer *echo.Echo) {
 	httpServer.POST("/api/kv/query", queryKvHandler, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_TokenUser(), http_middleware.MID_HasAnyRole([]string{user_mgr.USER_ROLE_ADMIN, user_mgr.USER_ROLE_READONLY}))
 	httpServer.POST("/api/kv/delete", deleteKvHandler, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_TokenUser(), http_middleware.MID_HasAnyRole([]string{user_mgr.USER_ROLE_ADMIN}))
 	httpServer.POST("/api/kv/update", updateKvHandler, http_middleware.MID_TokenPreCheck(true), http_middleware.MID_TokenUser(), http_middleware.MID_HasAnyRole([]string{user_mgr.USER_ROLE_ADMIN}))
-
-	httpServer.POST("/api/kv/query_public", queryPublicKvHandler, http_middleware.MID_IP_Action_SL(600, 600))
 }
 
 // @Summary      creat key value pair
@@ -235,39 +233,6 @@ func updateKvHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
-	res.MetaStatus(1, "success")
-	return ctx.JSON(http.StatusOK, res)
-}
-
-// @Summary      query key value pair
-// @Tags         kv
-// @Security     ApiKeyAuth
-// @Accept       json
-// @Param        msg  body  Msg_Req_QueryKv true  "query key value pair"
-// @Produce      json
-// @Success      200 {object} Msg_Resp_QueryKv "result"
-// @Router       /api/kv/query_public [post]
-func queryPublicKvHandler(ctx echo.Context) error {
-
-	var msg Msg_Req_QueryKv
-	res := &Msg_Resp_QueryKv{}
-	res.Data = []*DBKV{}
-
-	if err := ctx.Bind(&msg); err != nil {
-		res.MetaStatus(-1, "bad request data")
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	// check key is public or not
-
-	kvResult, err := dbkv.QueryDBKV(sqldb_plugin.GetInstance(), nil, msg.Filter.Keys, true, true)
-	if err != nil {
-		res.MetaStatus(-1, err.Error())
-		return ctx.JSON(http.StatusOK, res)
-	}
-
-	copier.Copy(&res.Data, &kvResult.Kv)
-	res.Total_count = kvResult.TotalCount
 	res.MetaStatus(1, "success")
 	return ctx.JSON(http.StatusOK, res)
 }
