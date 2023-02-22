@@ -11,8 +11,8 @@ github.com/cespare/xxhash/v2 v2.1.2 h1:YRXhKfTDauu4ajMg1TPgFO5jnlC2HCbmLXMcTG5cb
 github.com/cespare/xxhash/v2 v2.1.2/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/coreservice-io/ecs_uploader v0.2.1 h1:kyknhLtHVuEi2nAZch5qz5n6wEM4pWVPUEcCsXpM3Dk=
 github.com/coreservice-io/ecs_uploader v0.2.1/go.mod h1:tjKfSr+Y+3Sf/oobhoxlnZoiwUm37sXOP0YCORslsrc=
-github.com/coreservice-io/general-counter v0.2.2 h1:AsSmis9di5GBNHWv16k1mHMSCkBsVFcPnawh2TXd5ZE=
-github.com/coreservice-io/general-counter v0.2.2/go.mod h1:0zhwzUrxU/wusd38fH/xUHI6yl7WFNpluwKXEV85jzg=
+github.com/coreservice-io/general-counter v0.2.3 h1:QNRtGYbqIfBNZidL68cTi+mQri840MxEimDubvpFUeo=
+github.com/coreservice-io/general-counter v0.2.3/go.mod h1:0zhwzUrxU/wusd38fH/xUHI6yl7WFNpluwKXEV85jzg=
 github.com/coreservice-io/geo_ip v0.0.26 h1:nToUV9Hbeily45mFqC6Ibua8Kb0dCKAjiC7B3vZwxRU=
 github.com/coreservice-io/geo_ip v0.0.26/go.mod h1:VvL5nzRHE1ovkcz3Dw+JRdPfY3RuG/WkJmkboT+VByM=
 github.com/coreservice-io/gorm_log v0.2.1 h1:elWKG3P0gjuEl9DPONJalRVfTfotBTKhIO9ExtUMVtg=
