@@ -71,7 +71,11 @@ func CreateUser(tx *gorm.DB, email string, passwd string, isSuperUser bool, role
 }
 
 func UpdateUser(tx *gorm.DB, updateData map[string]interface{}, id int64) error {
-	queryResult, err := QueryUser(tx, &id, nil, nil, nil, nil, 1, 0, false, false)
+
+	limit := 1
+	offset := 0
+
+	queryResult, err := QueryUser(tx, &id, nil, nil, nil, nil, &limit, &offset, false, false)
 	if err != nil {
 		basic.Logger.Errorln("UpdateNodeUser queryUsers error:", err, "id:", id)
 		return err
@@ -90,7 +94,7 @@ func UpdateUser(tx *gorm.DB, updateData map[string]interface{}, id int64) error 
 	}
 
 	// update cache , for fast api middleware token auth
-	QueryUser(tx, nil, &queryResult.Users[0].Token, nil, nil, nil, 1, 0, false, true)
+	QueryUser(tx, nil, &queryResult.Users[0].Token, nil, nil, nil, &limit, &offset, false, true)
 
 	return nil
 }
@@ -100,7 +104,7 @@ type QueryUserResult struct {
 	Total_count int64
 }
 
-func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, email *string, forbidden *bool, limit int, offset int, fromCache bool, updateCache bool) (*QueryUserResult, error) {
+func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, email *string, forbidden *bool, limit *int, offset *int, fromCache bool, updateCache bool) (*QueryUserResult, error) {
 
 	if emailPattern != nil && email != nil {
 		return &QueryUserResult{
@@ -116,8 +120,8 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 		C_Str_Ptr("email", email).
 		C_Bool_Ptr("forbidden", forbidden).
 		C_Int64_Ptr("id", id).
-		C_Int(limit).
-		C_Int(offset)
+		C_Int_Ptr("limit", limit).
+		C_Int_Ptr("offset", offset)
 
 	key := redis_plugin.GetInstance().GenKey(ck.String())
 
@@ -160,11 +164,11 @@ func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, emai
 		}
 
 		query.Count(&queryResult.Total_count)
-		if limit > 0 {
-			query.Limit(limit)
+		if limit != nil {
+			query.Limit(*limit)
 		}
-		if offset > 0 {
-			query.Offset(offset)
+		if offset != nil {
+			query.Offset(*offset)
 		}
 
 		err := query.Find(&queryResult.Users).Error

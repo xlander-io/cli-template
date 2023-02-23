@@ -158,44 +158,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/kv/query_public": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "kv"
-                ],
-                "summary": "query key value pair",
-                "parameters": [
-                    {
-                        "description": "query key value pair",
-                        "name": "msg",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.Msg_Req_QueryKv"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "result",
-                        "schema": {
-                            "$ref": "#/definitions/api.Msg_Resp_QueryKv"
-                        }
-                    }
-                }
-            }
-        },
         "/api/kv/update": {
             "post": {
                 "security": [
@@ -717,11 +679,11 @@ const docTemplate = `{
                     ]
                 },
                 "limit": {
-                    "description": "required",
+                    "description": "optional",
                     "type": "integer"
                 },
                 "offset": {
-                    "description": "required",
+                    "description": "optional",
                     "type": "integer"
                 }
             }

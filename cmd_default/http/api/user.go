@@ -98,8 +98,8 @@ type Msg_Req_QueryUser_Filter struct {
 // @Description Msg_Req_QueryNodeUser
 type Msg_Req_QueryUser struct {
 	Filter Msg_Req_QueryUser_Filter `json:"filter"` // required
-	Limit  int                      `json:"limit"`  // required
-	Offset int                      `json:"offset"` // required
+	Limit  *int                     `json:"limit"`  // optional
+	Offset *int                     `json:"offset"` // optional
 }
 
 // @Description Msg_Resp_QueryNodeUser
@@ -359,8 +359,12 @@ func userLoginHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
+	/////
+
+	limit := 1
+	offset := 0
 	// find user
-	userResult, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, true, true)
+	userResult, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, &limit, &offset, true, true)
 	if err != nil {
 		res.MetaStatus(-4, err.Error())
 		return ctx.JSON(http.StatusOK, res)
@@ -425,7 +429,10 @@ func userRegisterHandler(ctx echo.Context) error {
 	}
 
 	// find user
-	userResult, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, false, true)
+	limit := 1
+	offset := 0
+
+	userResult, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, &limit, &offset, false, true)
 	if err != nil {
 		res.MetaStatus(-6, err.Error())
 		return ctx.JSON(http.StatusOK, res)
@@ -455,7 +462,7 @@ func userRegisterHandler(ctx echo.Context) error {
 	}
 
 	//refresh cache
-	user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, true, true)
+	user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, &limit, &offset, true, true)
 
 	res.Token = newUser.Token
 	res.MetaStatus(1, "success")
@@ -498,7 +505,10 @@ func userResetPasswordHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
-	userResult, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, false, false)
+	limit := 1
+	offset := 0
+
+	userResult, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, &limit, &offset, false, false)
 	if err != nil {
 		res.MetaStatus(-5, err.Error())
 		return ctx.JSON(http.StatusOK, res)
@@ -522,7 +532,7 @@ func userResetPasswordHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
-	user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, false, true)
+	user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, &limit, &offset, false, true)
 
 	res.MetaStatus(1, "success")
 	return ctx.JSON(http.StatusOK, res)
@@ -643,7 +653,10 @@ func userUpdateHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
-	result, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), &msg.Filter.Id[0], nil, nil, nil, nil, 1, 0, true, true)
+	limit := 1
+	offset := 0
+
+	result, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), &msg.Filter.Id[0], nil, nil, nil, nil, &limit, &offset, true, true)
 	if err != nil {
 		res.MetaStatus(-7, err.Error())
 		return ctx.JSON(http.StatusOK, res)
@@ -691,7 +704,7 @@ func userUpdateHandler(ctx echo.Context) error {
 	}
 
 	// cache
-	user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, &result.Users[0].Token, nil, nil, nil, 1, 0, false, true)
+	user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, &result.Users[0].Token, nil, nil, nil, &limit, &offset, false, true)
 
 	res.MetaStatus(1, "success")
 	return ctx.JSON(http.StatusOK, res)
@@ -728,8 +741,12 @@ func userCreateHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
+	////////
+	limit := 1
+	offset := 0
+
 	// check user exist
-	result, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, true, true)
+	result, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, &limit, &offset, true, true)
 	if err != nil {
 		res.MetaStatus(-7, err.Error())
 		return ctx.JSON(http.StatusOK, res)
@@ -763,7 +780,7 @@ func userCreateHandler(ctx echo.Context) error {
 	}
 
 	//refresh cache
-	user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, 1, 0, true, true)
+	user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, nil, nil, &msg.Email, nil, &limit, &offset, true, true)
 
 	res.MetaStatus(1, "success")
 	return ctx.JSON(http.StatusOK, res)

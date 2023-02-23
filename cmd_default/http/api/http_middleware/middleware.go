@@ -61,7 +61,10 @@ func MID_TokenUser() func(next echo.HandlerFunc) echo.HandlerFunc {
 			}
 			token := token_i.(string)
 
-			userResult, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, &token, nil, nil, nil, 1, 0, true, true)
+			limit := 1
+			offset := 0
+
+			userResult, err := user_mgr.QueryUser(sqldb_plugin.GetInstance(), nil, &token, nil, nil, nil, &limit, &offset, true, true)
 			if err == nil && len(userResult.Users) > 0 {
 				if userResult.Users[0].Forbidden {
 					return errors.New("user forbidden")

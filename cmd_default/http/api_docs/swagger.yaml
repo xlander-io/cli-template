@@ -113,10 +113,10 @@ definitions:
         - $ref: '#/definitions/api.Msg_Req_QueryUser_Filter'
         description: required
       limit:
-        description: required
+        description: optional
         type: integer
       offset:
-        description: required
+        description: optional
         type: integer
     type: object
   api.Msg_Req_QueryUser_Filter:
@@ -425,29 +425,6 @@ paths:
       tags:
       - kv
   /api/kv/query:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: query key value pair
-        in: body
-        name: msg
-        required: true
-        schema:
-          $ref: '#/definitions/api.Msg_Req_QueryKv'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: result
-          schema:
-            $ref: '#/definitions/api.Msg_Resp_QueryKv'
-      security:
-      - ApiKeyAuth: []
-      summary: query key value pair
-      tags:
-      - kv
-  /api/kv/query_public:
     post:
       consumes:
       - application/json
