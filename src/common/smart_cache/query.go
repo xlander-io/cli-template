@@ -57,15 +57,15 @@ var lockMap sync.Map
 func CheckLimitOffset(limit *int, offset *int) error {
 
 	if offset != nil && limit == nil {
-		return errors.New("offset missing")
+		return errors.New("err: limit missing")
 	}
 
 	if limit != nil && *limit <= 0 {
-		return errors.New("limit error")
+		return errors.New("err: limit >0 required")
 	}
 
 	if offset != nil && *offset < 0 {
-		return errors.New("offset error")
+		return errors.New("err: offset >=0 required")
 	}
 
 	return nil
