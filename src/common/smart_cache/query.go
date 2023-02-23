@@ -2,6 +2,7 @@ package smart_cache
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/coreservice-io/cli-template/basic"
@@ -52,6 +53,23 @@ type smartCacheRefElement struct {
 }
 
 var lockMap sync.Map
+
+func CheckLimitOffset(limit *int, offset *int) error {
+
+	if offset != nil && limit == nil {
+		return errors.New("offset missing")
+	}
+
+	if limit != nil && *limit <= 0 {
+		return errors.New("limit error")
+	}
+
+	if offset != nil && *offset < 0 {
+		return errors.New("offset error")
+	}
+
+	return nil
+}
 
 func SmartQueryCacheSlow(key string, fromCache bool, updateCache bool, queryDescription string,
 	resultHolderAlloc func() *QueryResult, slowQuery *SlowQuery) *QueryResult {
