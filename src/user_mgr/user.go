@@ -106,6 +106,14 @@ type QueryUserResult struct {
 
 func QueryUser(tx *gorm.DB, id *int64, token *string, emailPattern *string, email *string, forbidden *bool, limit *int, offset *int, fromCache bool, updateCache bool) (*QueryUserResult, error) {
 
+	if limit != nil && *limit <= 0 {
+		return nil, errors.New("limit error")
+	}
+
+	if offset != nil && *offset < 0 {
+		return nil, errors.New("offset error")
+	}
+
 	if emailPattern != nil && email != nil {
 		return &QueryUserResult{
 			Users:       []*UserModel{},
