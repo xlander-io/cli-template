@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/coreservice-io/cli-template/basic"
 	"github.com/coreservice-io/cli-template/plugin/sqldb_plugin"
 	"github.com/coreservice-io/cli-template/src/common/http"
 	"github.com/coreservice-io/cli-template/src/common/limiter"
@@ -29,10 +30,12 @@ func MID_TokenPreCheck(super_token_required bool) func(next echo.HandlerFunc) ec
 			// check token format
 			is_token, is_super_token := token_mgr.TokenMgr.CheckToken(token)
 			if !is_token {
+				basic.Logger.Debugln("token format error")
 				return errors.New("token error")
 			}
 
 			if super_token_required && !is_super_token {
+				basic.Logger.Debugln("super token error")
 				return errors.New("super token error")
 			}
 
@@ -225,6 +228,13 @@ func MID_IP_Action_SL(duration_second int64, Count int) func(echo.HandlerFunc) e
 // MID_Default_IP_Action speed limiter
 func MID_Default_IP_Action_SL() func(echo.HandlerFunc) echo.HandlerFunc {
 	return MID_IP_Action_SL(default_speed_limiter_duration_second, default_speed_limiter_count)
+}
+
+const auth_speed_limiter_duration_second = 3600
+const auth_speed_limiter_count = 600
+
+func MID_AUTH_IP_Action_SL() func(echo.HandlerFunc) echo.HandlerFunc {
+	return MID_IP_Action_SL(auth_speed_limiter_duration_second, auth_speed_limiter_count)
 }
 
 // ///////////////////////////////////////////////////////////////////////

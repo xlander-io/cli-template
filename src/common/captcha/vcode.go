@@ -3,6 +3,7 @@ package captcha
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/coreservice-io/cli-template/basic"
@@ -11,6 +12,8 @@ import (
 	goredis "github.com/go-redis/redis/v8"
 )
 
+const vcode_len = 8 //8 is safe ,don't make this short
+
 const redis_vcode_prefix = "vcode"
 
 // send vcode to user
@@ -18,7 +21,7 @@ func GenVCode(vCodeKey string) (string, error) {
 	key := redis_plugin.GetInstance().GenKey(redis_vcode_prefix, vCodeKey)
 	code, _ := redis_plugin.GetInstance().Get(context.Background(), key).Result()
 	if code == "" {
-		code = rand_util.GenRandStr(4)
+		code = rand_util.GenRandStr(vcode_len)
 	}
 	_, err := redis_plugin.GetInstance().Set(context.Background(), key, code, 4*time.Hour).Result()
 	if err != nil {
@@ -31,6 +34,11 @@ func GenVCode(vCodeKey string) (string, error) {
 }
 
 func ValidateVCode(vCodeKey string, code string) bool {
+
+	//incase user have Cap or whitespace
+	code = strings.ToLower(code)
+	code = strings.TrimSpace(code)
+
 	key := redis_plugin.GetInstance().GenKey(redis_vcode_prefix, vCodeKey)
 	value, err := redis_plugin.GetInstance().Get(context.Background(), key).Result()
 	if err == goredis.Nil {
@@ -40,9 +48,5 @@ func ValidateVCode(vCodeKey string, code string) bool {
 		return false
 	}
 	redis_plugin.GetInstance().Del(context.Background(), key)
-
-	if value == code {
-		return true
-	}
-	return false
+	return value == code
 }
