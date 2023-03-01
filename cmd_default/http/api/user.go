@@ -247,7 +247,7 @@ func userEmailVCodeHandler(ctx echo.Context) error {
 	// send
 	fromText := config.Get_config().Toml_config.Smtp.From_email
 	toAddress := msg.Email
-	subject := "Your verification code 'vcode' "
+	subject := "Your verification code 'vcode', it will expire in 10 minutes "
 	body := "" + code
 	err = mail_plugin.GetInstance().Send(fromText, toAddress, subject, body)
 	if err != nil {
@@ -423,7 +423,7 @@ func userRegisterHandler(ctx echo.Context) error {
 	// check vcode
 	vcode := strings.TrimSpace(msg.Vcode)
 	if !captcha.ValidateVCode(msg.Email, vcode) {
-		res.MetaStatus(-5, "vcode error")
+		res.MetaStatus(-5, "vcode error, wrong or expires")
 		return ctx.JSON(http.StatusOK, res)
 	}
 
@@ -500,7 +500,7 @@ func userResetPasswordHandler(ctx echo.Context) error {
 	// check vcode
 	vcode := strings.TrimSpace(msg.Vcode)
 	if !captcha.ValidateVCode(msg.Email, vcode) {
-		res.MetaStatus(-4, "vcode error")
+		res.MetaStatus(-4, "vcode error, wrong or expire")
 		return ctx.JSON(http.StatusOK, res)
 	}
 

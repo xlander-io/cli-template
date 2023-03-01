@@ -13,7 +13,7 @@ import (
 )
 
 const vcode_len = 16 //16 is safe ,don't make this shorter then 16
-
+const vcode_expire_secs = 600
 const redis_vcode_prefix = "vcode"
 
 // send vcode to user
@@ -23,7 +23,7 @@ func GenVCode(vCodeKey string) (string, error) {
 	if code == "" {
 		code = rand_util.GenRandStr(vcode_len)
 	}
-	_, err := redis_plugin.GetInstance().Set(context.Background(), key, code, 4*time.Hour).Result()
+	_, err := redis_plugin.GetInstance().Set(context.Background(), key, code, vcode_expire_secs*time.Second).Result()
 	if err != nil {
 		basic.Logger.Errorln("GenVCode set email vcode to redis error", "err", err)
 		return "", errors.New("set email vcode error")
@@ -34,7 +34,6 @@ func GenVCode(vCodeKey string) (string, error) {
 }
 
 func ValidateVCode(vCodeKey string, code string) bool {
-
 	//incase user have Cap or whitespace
 	code = strings.ToLower(code)
 	code = strings.TrimSpace(code)
