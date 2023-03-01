@@ -12,7 +12,7 @@ import (
 	goredis "github.com/go-redis/redis/v8"
 )
 
-const vcode_len = 8 //8 is safe ,don't make this short
+const vcode_len = 16 //16 is safe ,don't make this shorter then 16
 
 const redis_vcode_prefix = "vcode"
 

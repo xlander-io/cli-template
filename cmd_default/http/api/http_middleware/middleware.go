@@ -201,8 +201,8 @@ func MID_HasAllPermissions(permissions []string) func(echo.HandlerFunc) echo.Han
 
 // /////////////////////////////////////////////////////////////////////////
 
-const default_speed_limiter_duration_second = 600
-const default_speed_limiter_count = 600
+const default_speed_limiter_duration_second = 300
+const default_speed_limiter_count = 300
 
 // /////////////////////////////////////////////////////////////////////////
 // MID_IP_Action speed limiter
@@ -228,13 +228,6 @@ func MID_IP_Action_SL(duration_second int64, Count int) func(echo.HandlerFunc) e
 // MID_Default_IP_Action speed limiter
 func MID_Default_IP_Action_SL() func(echo.HandlerFunc) echo.HandlerFunc {
 	return MID_IP_Action_SL(default_speed_limiter_duration_second, default_speed_limiter_count)
-}
-
-const auth_speed_limiter_duration_second = 3600
-const auth_speed_limiter_count = 600
-
-func MID_AUTH_IP_Action_SL() func(echo.HandlerFunc) echo.HandlerFunc {
-	return MID_IP_Action_SL(auth_speed_limiter_duration_second, auth_speed_limiter_count)
 }
 
 // ///////////////////////////////////////////////////////////////////////

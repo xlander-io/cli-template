@@ -151,15 +151,15 @@ type Msg_Req_CheckEmail struct {
 
 func configUser(httpServer *echo.Echo) {
 	//general
-	httpServer.GET("/api/user/captcha", getCaptchaHandler, http_middleware.MID_AUTH_IP_Action_SL())
-	httpServer.POST("/api/user/email_vcode", userEmailVCodeHandler, http_middleware.MID_AUTH_IP_Action_SL())
+	httpServer.GET("/api/user/captcha", getCaptchaHandler, http_middleware.MID_Default_IP_Action_SL())
+	httpServer.POST("/api/user/email_vcode", userEmailVCodeHandler, http_middleware.MID_Default_IP_Action_SL())
 
 	//config
 	httpServer.GET("/api/user/auth_config", authConfigHandler, http_middleware.MID_Default_IP_Action_SL())
 	// user
-	httpServer.POST("/api/user/login", userLoginHandler, http_middleware.MID_AUTH_IP_Action_SL())
-	httpServer.POST("/api/user/register", userRegisterHandler, http_middleware.MID_AUTH_IP_Action_SL())
-	httpServer.POST("/api/user/reset_password", userResetPasswordHandler, http_middleware.MID_AUTH_IP_Action_SL())
+	httpServer.POST("/api/user/login", userLoginHandler, http_middleware.MID_Default_IP_Action_SL())
+	httpServer.POST("/api/user/register", userRegisterHandler, http_middleware.MID_Default_IP_Action_SL())
+	httpServer.POST("/api/user/reset_password", userResetPasswordHandler, http_middleware.MID_Default_IP_Action_SL())
 	httpServer.GET("/api/user/info", userInfoHandler, http_middleware.MID_TokenPreCheck(false), http_middleware.MID_Default_Token_IP_SL(), http_middleware.MID_TokenUser())
 
 	// admin|readonly
@@ -247,8 +247,8 @@ func userEmailVCodeHandler(ctx echo.Context) error {
 	// send
 	fromText := config.Get_config().Toml_config.Smtp.From_email
 	toAddress := msg.Email
-	subject := "Verification code"
-	body := "Your verification code is [ " + code + " ], it will expire in 4 hours"
+	subject := "Your verification code 'vcode' "
+	body := "" + code
 	err = mail_plugin.GetInstance().Send(fromText, toAddress, subject, body)
 	if err != nil {
 		basic.Logger.Errorln("send VCode error:", err)
