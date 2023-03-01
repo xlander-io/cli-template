@@ -636,6 +636,10 @@ const docTemplate = `{
                 "email": {
                     "description": "required",
                     "type": "string"
+                },
+                "vcode_len": {
+                    "description": "required",
+                    "type": "integer"
                 }
             }
         },

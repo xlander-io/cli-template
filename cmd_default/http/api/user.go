@@ -16,6 +16,7 @@ import (
 	"github.com/coreservice-io/cli-template/src/common/limiter"
 	"github.com/coreservice-io/cli-template/src/common/token_mgr"
 	"github.com/coreservice-io/cli-template/src/common/validator"
+	"github.com/coreservice-io/cli-template/src/common/vcode"
 	"github.com/coreservice-io/cli-template/src/user_mgr"
 	"github.com/coreservice-io/utils/hash_util"
 	"github.com/jinzhu/copier"
@@ -42,6 +43,7 @@ type User struct {
 
 type Msg_Req_EmailVCode struct {
 	Email      string `json:"email"`      // required
+	Vcode_len  int    `json:"vcode_len"`  // required
 	Captcha_id string `json:"captcha_id"` // required
 	Captcha    string `json:"captcha"`    // required
 }
@@ -238,7 +240,7 @@ func userEmailVCodeHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, res)
 	}
 
-	code, err := captcha.GenVCode(msg.Email)
+	code, err := vcode.GenVCode(msg.Email, msg.Vcode_len, 600)
 	if err != nil {
 		res.MetaStatus(-4, err.Error())
 		return ctx.JSON(http.StatusOK, res)
@@ -421,8 +423,8 @@ func userRegisterHandler(ctx echo.Context) error {
 	}
 
 	// check vcode
-	vcode := strings.TrimSpace(msg.Vcode)
-	if !captcha.ValidateVCode(msg.Email, vcode) {
+	vcode_ := strings.TrimSpace(msg.Vcode)
+	if !vcode.ValidateVCodeWithLen(msg.Email, vcode_, 4) {
 		res.MetaStatus(-5, "vcode error, wrong or expires")
 		return ctx.JSON(http.StatusOK, res)
 	}
@@ -498,8 +500,8 @@ func userResetPasswordHandler(ctx echo.Context) error {
 	}
 
 	// check vcode
-	vcode := strings.TrimSpace(msg.Vcode)
-	if !captcha.ValidateVCode(msg.Email, vcode) {
+	vcode_ := strings.TrimSpace(msg.Vcode)
+	if !vcode.ValidateVCodeWithLen(msg.Email, vcode_, 16) {
 		res.MetaStatus(-4, "vcode error, wrong or expire")
 		return ctx.JSON(http.StatusOK, res)
 	}

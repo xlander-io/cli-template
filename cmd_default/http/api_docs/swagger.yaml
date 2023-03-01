@@ -87,6 +87,9 @@ definitions:
       email:
         description: required
         type: string
+      vcode_len:
+        description: required
+        type: integer
     type: object
   api.Msg_Req_QueryKv:
     description: Msg_Req_QueryKv
