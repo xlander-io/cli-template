@@ -21,7 +21,7 @@ func GenVCode(vCodeKey string, vCodeLen int, vCodeExpireSecs int) (string, error
 	}
 	key := redis_plugin.GetInstance().GenKey(redis_vcode_prefix, vCodeKey)
 	code, _ := redis_plugin.GetInstance().Get(context.Background(), key).Result()
-	if code == "" {
+	if len(code) != vCodeLen {
 		code = rand_util.GenRandStr(vCodeLen)
 	}
 	_, err := redis_plugin.GetInstance().Set(context.Background(), key, code, time.Duration(vCodeExpireSecs)*time.Second).Result()
