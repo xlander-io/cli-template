@@ -26,12 +26,12 @@ type Config struct {
 }
 
 func safeTomlSet(toml_tree *toml.Tree, key string, value interface{}) {
-	switch value.(type) {
+	switch value := value.(type) {
 	case int8, int16, int32, int64, int, uint, uint8, uint16, uint32, uint64:
 		int_v, _ := strconv.ParseInt(fmt.Sprintf("%d", value), 10, 64)
 		toml_tree.Set(key, int_v)
 	case float32:
-		toml_tree.Set(key, float64(value.(float32)))
+		toml_tree.Set(key, float64(value))
 	default:
 		toml_tree.Set(key, value)
 	}
