@@ -56,7 +56,7 @@ func Init_(name string, dbConfig *Config, logger log.Logger) error {
 	db, err := gorm.Open(sqlite.Open(dbConfig.Sqlite_abs_path), &gorm.Config{
 		Logger: gorm_log.New_gormLocalLogger(logger, gorm_log.Config{
 			SlowThreshold:             500 * time.Millisecond,
-			IgnoreRecordNotFoundError: false,
+			IgnoreRecordNotFoundError: true,
 			LogLevel:                  db_log_level,
 		}),
 	})
