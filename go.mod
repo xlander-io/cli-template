@@ -20,7 +20,7 @@ require (
 
 require (
 	github.com/coreservice-io/ecs_uploader v0.2.1
-	github.com/coreservice-io/general-counter v0.2.3
+	github.com/coreservice-io/general-counter v0.3.1
 	github.com/coreservice-io/geo_ip v0.0.26
 	github.com/coreservice-io/gorm_log v0.2.1
 	github.com/coreservice-io/job v0.2.1
