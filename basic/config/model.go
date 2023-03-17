@@ -1,6 +1,7 @@
 package config
 
 type TomlConfig struct {
+	Build           Build          `toml:"build"`
 	Log             Log            `toml:"log"`
 	Token           Token          `toml:"token"`
 	Http            HttpConfig     `toml:"http"`
@@ -17,6 +18,9 @@ type TomlConfig struct {
 	Sqlite          Sqlite         `toml:"sqlite"`
 }
 
+type Build struct {
+	Mode string `toml:"mode"`
+}
 type Log struct {
 	Level string `toml:"level"`
 }

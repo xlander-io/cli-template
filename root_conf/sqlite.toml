@@ -1,3 +1,9 @@
+[build]
+mode = 'debug' #release
+
+[log]
+level = 'DEBU'
+
 [token]
 salt = "clitemplate.com"
 

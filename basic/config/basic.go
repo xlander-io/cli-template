@@ -32,6 +32,12 @@ func ConfigBasic(toml_target string) []string {
 		panic(conf_err)
 	}
 
+	/////set build/////////
+	build_mode_err := basic.SetMode(Get_config().Toml_config.Build.Mode)
+	if build_mode_err != nil {
+		panic(build_mode_err)
+	}
+
 	/////set up basic logger ///////
 	logs_abs_path := basic.AbsPath("logs")
 	if err := logger_plugin.Init(logs_abs_path); err != nil {

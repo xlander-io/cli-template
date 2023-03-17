@@ -13,6 +13,7 @@ import (
 
 func Cli_get_flags() []cli.Flag {
 	allflags := []cli.Flag{}
+	allflags = append(allflags, &cli.StringFlag{Name: "build.mode", Required: false})
 	allflags = append(allflags, &cli.StringFlag{Name: "log.level", Required: false})
 	allflags = append(allflags, &cli.BoolFlag{Name: "http.enable", Required: false})
 	allflags = append(allflags, &cli.IntFlag{Name: "http.port", Required: false})
@@ -38,8 +39,20 @@ var log_level_map = map[string]struct{}{
 	"PANIC": {},
 }
 
+const BUILD_MODE_RELEASE = "release"
+const BUILD_MODE_DEBUG = "debug"
+
 func Cli_set_config(clictx *cli.Context) error {
 	config := config.Get_config()
+
+	if clictx.IsSet("build.mode") {
+		build_m := clictx.String("build.mode")
+		build_m = strings.TrimSpace(strings.ToLower(build_m))
+		if build_m != BUILD_MODE_RELEASE && build_m != BUILD_MODE_DEBUG {
+			return errors.New("build.mode error, allowed: '" + BUILD_MODE_RELEASE + "' or '" + BUILD_MODE_DEBUG + "'")
+		}
+		config.SetUserTomlConfig("build.mode", build_m)
+	}
 
 	if clictx.IsSet("log.level") {
 		log_level := strings.ToUpper(clictx.String("log.level"))

@@ -33,7 +33,7 @@ func StartDefault() {
 	test_g_token := token_mgr.TokenMgr.GenToken()
 	fmt.Println("a test token generated :", test_g_token)
 
-	fmt.Println(color.Green("---------exmaple code result ------------"))
+	fmt.Println(color.Green("---------example code result ------------"))
 	fmt.Println("color test :", color.Red("red"))
 	fmt.Println("color test :", color.RedBG("red bg"))
 
