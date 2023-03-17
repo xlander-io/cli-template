@@ -22,3 +22,7 @@ func SetMode(mode_ string) error {
 	mode = mode_
 	return nil
 }
+
+func GetMode() string {
+	return mode
+}
