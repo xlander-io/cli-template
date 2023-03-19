@@ -21,9 +21,6 @@ func StartDefault() {
 	//print logo first
 	fmt.Println(color.Green(basic.Logo))
 
-	//print build mode
-	fmt.Println("build mode :", basic.GetMode())
-
 	//init components and run example
 	InitComponent()
 
