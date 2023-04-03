@@ -13,8 +13,8 @@ github.com/coreservice-io/ecs_uploader v0.2.1 h1:kyknhLtHVuEi2nAZch5qz5n6wEM4pWV
 github.com/coreservice-io/ecs_uploader v0.2.1/go.mod h1:tjKfSr+Y+3Sf/oobhoxlnZoiwUm37sXOP0YCORslsrc=
 github.com/coreservice-io/general-counter v0.3.1 h1:QZGfGMiUelvfl4Qivf3e4OZCFHPGwPDOb8DbyYENMVI=
 github.com/coreservice-io/general-counter v0.3.1/go.mod h1:0zhwzUrxU/wusd38fH/xUHI6yl7WFNpluwKXEV85jzg=
-github.com/coreservice-io/geo_ip v0.0.26 h1:nToUV9Hbeily45mFqC6Ibua8Kb0dCKAjiC7B3vZwxRU=
-github.com/coreservice-io/geo_ip v0.0.26/go.mod h1:VvL5nzRHE1ovkcz3Dw+JRdPfY3RuG/WkJmkboT+VByM=
+github.com/coreservice-io/geo_ip v0.0.28 h1:txAnWpfmCc9yFvA8rf6nWHiIyzohn2FTQUmrmkmvK5g=
+github.com/coreservice-io/geo_ip v0.0.28/go.mod h1:VvL5nzRHE1ovkcz3Dw+JRdPfY3RuG/WkJmkboT+VByM=
 github.com/coreservice-io/gorm_log v0.2.1 h1:elWKG3P0gjuEl9DPONJalRVfTfotBTKhIO9ExtUMVtg=
 github.com/coreservice-io/gorm_log v0.2.1/go.mod h1:yVMX5qYH37DAzwOTteC85Jz5Y0JNoyr5e08/tE9tGPg=
 github.com/coreservice-io/job v0.2.1 h1:7jZ5DYTSFlzTnrXnRvrVh+jBRS8HwKFISPXCRHtoMUk=
