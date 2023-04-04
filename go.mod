@@ -23,10 +23,10 @@ require (
 	github.com/coreservice-io/general-counter v0.3.1
 	github.com/coreservice-io/geo_ip v0.0.31
 	github.com/coreservice-io/gorm_log v0.2.1
-	github.com/coreservice-io/job v0.2.1
+	github.com/coreservice-io/job v0.3.0
 	github.com/coreservice-io/log v0.2.1
 	github.com/coreservice-io/logrus_log v0.2.1
-	github.com/coreservice-io/redis_spr v0.1.20
+	github.com/coreservice-io/redis_spr v0.1.30
 	github.com/coreservice-io/reference v0.0.12
 	github.com/coreservice-io/utils v0.2.7
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0

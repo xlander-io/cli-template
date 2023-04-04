@@ -31,6 +31,7 @@ func ScheduleRedisPipelineExec() {
 
 	for i := 0; i < exec_thread_count; i++ {
 		job.Start(
+			context.Background(),
 			//job process
 			jobName,
 			// job type

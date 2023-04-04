@@ -1,6 +1,7 @@
 package auto_cert_plugin
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,6 +49,7 @@ func (cert *Cert) AutoUpdate(update_change_callback func(string, string)) {
 	if !cert.Auto_updating {
 		cert.Auto_updating = true
 		job.Start(
+			context.Background(),
 			"cert_auto_update_job",
 			job.TYPE_PANIC_REDO,
 			int64(cert.Check_interval_secs),
