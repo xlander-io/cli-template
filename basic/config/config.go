@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -51,12 +52,19 @@ func (config *Config) SetRootTomlConfig(key string, value interface{}) {
 	safeTomlSet(config.Root_config_tree, key, value)
 }
 
-func (config *Config) Read_merge_config() (string, error) {
+func (config *Config) MergedConfig2TomlStr() (string, error) {
 	config_str, err := toml.Marshal(config.Toml_config)
 	if err != nil {
 		return "", err
 	}
+	return string(config_str), nil
+}
 
+func (config *Config) MergedConfig2JsonStr() (string, error) {
+	config_str, err := json.Marshal(config.Toml_config)
+	if err != nil {
+		return "", err
+	}
 	return string(config_str), nil
 }
 

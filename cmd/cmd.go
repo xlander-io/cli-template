@@ -111,13 +111,21 @@ func ConfigCmd() *cli.App {
 				Subcommands: []*cli.Command{
 					//show config
 					{
-						Name:  "show",
-						Usage: "show configs",
+						Name:  "get_toml",
+						Usage: "show config as toml string",
 						Action: func(clictx *cli.Context) error {
-							fmt.Println("======== start of config ========")
-							configs, _ := config.Get_config().Read_merge_config()
+							configs, _ := config.Get_config().MergedConfig2TomlStr()
 							fmt.Println(configs)
-							fmt.Println("======== end  of  config ========")
+							return nil
+						},
+					},
+					//show config
+					{
+						Name:  "get_json",
+						Usage: "show config as json string",
+						Action: func(clictx *cli.Context) error {
+							configs, _ := config.Get_config().MergedConfig2JsonStr()
+							fmt.Println(configs)
 							return nil
 						},
 					},

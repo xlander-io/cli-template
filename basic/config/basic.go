@@ -48,17 +48,6 @@ func ConfigBasic(toml_target string) []string {
 	loglevel := ilog.ParseLogLevel(Get_config().Toml_config.Log.Level)
 	basic.Logger.SetLevel(loglevel)
 
-	////////////////////////////////
-	//print build mode
-	basic.Logger.Infoln("build mode:", basic.GetMode())
-	basic.Logger.Infoln("log level:", ilog.LogLevelToTag(loglevel))
-	//log basic info
-	basic.Logger.Debugln("------------------------------------")
-	basic.Logger.Debugln("working dir:", basic.WORK_DIR)
-	basic.Logger.Debugln("------------------------------------")
-	basic.Logger.Debugln("using user config toml file:", Get_config().User_config_path)
-	///////////////////////////////
-
 	return real_args
 
 }
