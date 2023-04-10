@@ -30,18 +30,11 @@ func ScheduleRedisPipelineExec() {
 	const jobName = "ScheduleRedisPipelineExec"
 
 	for i := 0; i < exec_thread_count; i++ {
-		job.Start(
-			context.Background(),
-			//job process
-			jobName,
-			// job type
-			// UJob.TYPE_PANIC_REDO  auto restart if panic
-			// UJob.TYPE_PANIC_RETURN  stop if panic
-			job.TYPE_PANIC_REDO,
-			1,
-			nil,
-			nil,
-			func(j *job.Job) {
+		job.Start(context.Background(), job.JobConfig{
+			Name:          jobName,
+			Job_type:      job.TYPE_PANIC_REDO,
+			Interval_secs: 1,
+			Process_fn: func(j *job.Job) {
 				for {
 					if len(cmdListChannel) < 100 && time.Now().UTC().UnixMilli()-last_exec_time_unixmilli < exec_interval_limit_millisec {
 						time.Sleep(250 * time.Millisecond)
@@ -50,13 +43,10 @@ func ScheduleRedisPipelineExec() {
 					exec()
 				}
 			},
-			//onPanic callback
-			func(j *job.Job, panic_err interface{}) {
+			On_panic: func(job *job.Job, panic_err interface{}) {
 				basic.Logger.Errorln(panic_err)
 			},
-			// onFinish callback
-			nil,
-		)
+		}, nil)
 	}
 }
 

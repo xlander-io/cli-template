@@ -48,23 +48,19 @@ func GetInstance_(name string) *Cert {
 func (cert *Cert) AutoUpdate(update_change_callback func(string, string)) {
 	if !cert.Auto_updating {
 		cert.Auto_updating = true
-		job.Start(
-			context.Background(),
-			"cert_auto_update_job",
-			job.TYPE_PANIC_REDO,
-			int64(cert.Check_interval_secs),
-			nil,
-			nil,
-			// job process
-			func(j *job.Job) {
+
+		job.Start(context.Background(), job.JobConfig{
+			Name:          "cert_auto_update_job",
+			Job_type:      job.TYPE_PANIC_REDO,
+			Interval_secs: int64(cert.Check_interval_secs),
+			Process_fn: func(j *job.Job) {
 				cert.update_(update_change_callback)
 			},
-			// onPanic callback, run if panic happened
-			func(j *job.Job, panic_err interface{}) {
+			On_panic: func(job *job.Job, panic_err interface{}) {
 				basic.Logger.Errorln(panic_err)
 			},
-			nil,
-		)
+		}, nil)
+
 	}
 }
 

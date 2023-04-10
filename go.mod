@@ -19,11 +19,11 @@ require (
 )
 
 require (
-	github.com/coreservice-io/ecs_uploader v0.3.0
-	github.com/coreservice-io/general-counter v0.3.5
+	github.com/coreservice-io/ecs_uploader v0.4.0
+	github.com/coreservice-io/general-counter v0.4.0
 	github.com/coreservice-io/geo_ip v0.0.31
 	github.com/coreservice-io/gorm_log v0.2.1
-	github.com/coreservice-io/job v0.3.0
+	github.com/coreservice-io/job v0.4.0
 	github.com/coreservice-io/log v0.2.1
 	github.com/coreservice-io/logrus_log v0.2.1
 	github.com/coreservice-io/redis_spr v0.1.30
@@ -42,7 +42,7 @@ require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/coreservice-io/package_client v0.3.0 // indirect
+	github.com/coreservice-io/package_client v0.4.0 // indirect
 	github.com/coreservice-io/safe_go v0.2.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
