@@ -197,6 +197,10 @@ func GetDBKV(tx *gorm.DB, id *int64, key *string, fromCache bool, updateCache bo
 		return nil, nil
 	}
 
+	if len(result.Kv) == 0 {
+		return nil, errors.New("nil error")
+	}
+
 	return result.Kv[0], nil
 }
 
