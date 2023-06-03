@@ -54,12 +54,13 @@ func InitMatchedEcho(name string, match func(string, string) bool) (*MatchEcho, 
 
 type EchoServer struct {
 	*echo.Echo
-	Logger    log.Logger
-	Http_port int
-	Tls       bool
-	Crt_path  string
-	Key_path  string
-	Cert      *tls.Certificate
+	Logger     log.Logger
+	Http_port  int
+	Keep_alive bool
+	Tls        bool
+	Crt_path   string
+	Key_path   string
+	Cert       *tls.Certificate
 }
 
 var instanceMap = map[string]*EchoServer{}
@@ -80,10 +81,11 @@ func GetInstance_(name string) *EchoServer {
 http_port
 */
 type Config struct {
-	Port     int
-	Tls      bool
-	Crt_path string
-	Key_path string
+	Port       int
+	Keep_alive bool
+	Tls        bool
+	Crt_path   string
+	Key_path   string
 }
 
 func Init(serverConfig Config, OnPanicHanlder func(panic_err interface{}), logger log.Logger) error {
@@ -112,6 +114,7 @@ func Init_(name string, serverConfig Config, OnPanicHanlder func(panic_err inter
 		echo.New(),
 		logger,
 		serverConfig.Port,
+		serverConfig.Keep_alive,
 		serverConfig.Tls,
 		serverConfig.Crt_path,
 		serverConfig.Key_path,
@@ -140,6 +143,7 @@ func Init_(name string, serverConfig Config, OnPanicHanlder func(panic_err inter
 }
 
 func (s *EchoServer) Start() error {
+
 	if s.Tls {
 		cert, err := tls.LoadX509KeyPair(s.Crt_path, s.Key_path)
 		if err != nil {
@@ -151,7 +155,7 @@ func (s *EchoServer) Start() error {
 			return s.Cert, nil
 		}
 
-		// todo
+		// more safe?
 		// tlsconf.MinVersion = tls.VersionTLS12
 
 		server := http.Server{
@@ -159,10 +163,12 @@ func (s *EchoServer) Start() error {
 			TLSConfig: tlsconf,
 		}
 
+		server.SetKeepAlivesEnabled(s.Keep_alive)
 		return s.StartServer(&server)
 
 	} else {
 
+		s.Echo.Server.SetKeepAlivesEnabled(s.Keep_alive)
 		return s.Echo.Start(":" + strconv.Itoa(s.Http_port))
 	}
 }

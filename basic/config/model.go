@@ -30,16 +30,18 @@ type Token struct {
 }
 
 type HttpConfig struct {
-	Enable bool `toml:"enable" json:"enable"`
-	Port   int  `toml:"port" json:"port"`
+	Enable     bool `toml:"enable" json:"enable"`
+	Port       int  `toml:"port" json:"port"`
+	Keep_alive bool `toml:"keep_alive" json:"keep_alive"`
 }
 
 type HttpsConfig struct {
-	Enable   bool   `toml:"enable" json:"enable"`
-	Port     int    `toml:"port" json:"port"`
-	Crt_path string `toml:"crt_path" json:"crt_path"`
-	Key_path string `toml:"key_path" json:"key_path"`
-	Html_dir string `toml:"html_dir" json:"html_dir"`
+	Enable     bool   `toml:"enable" json:"enable"`
+	Port       int    `toml:"port" json:"port"`
+	Keep_alive bool   `toml:"keep_alive" json:"keep_alive"`
+	Crt_path   string `toml:"crt_path" json:"crt_path"`
+	Key_path   string `toml:"key_path" json:"key_path"`
+	Html_dir   string `toml:"html_dir" json:"html_dir"`
 }
 
 type AutoCert struct {

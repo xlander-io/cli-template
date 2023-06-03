@@ -10,10 +10,12 @@ salt = "clitemplate.com"
 [http]
 enable = true
 port = 80
+keep_alive = true #default true for common user application
 
 [https]
 enable = true
 port = 443
+keep_alive = true #default true for common user application
 crt_path = 'assets/cert/crt.crt'
 key_path = 'assets/cert/key.key'
 html_dir = 'assets/html'
