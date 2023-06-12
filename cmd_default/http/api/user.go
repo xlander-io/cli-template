@@ -424,7 +424,7 @@ func userRegisterHandler(ctx echo.Context) error {
 
 	// check vcode
 	vcode_ := strings.TrimSpace(msg.Vcode)
-	if !vcode.ValidateVCodeWithLen(msg.Email, vcode_, 4) {
+	if !vcode.ValidateVCodeWithLen(msg.Email, vcode_, 16) {
 		res.MetaStatus(-5, "vcode error, wrong or expires")
 		return ctx.JSON(http.StatusOK, res)
 	}
