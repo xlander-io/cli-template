@@ -23,8 +23,8 @@ github.com/coreservice-io/log v0.2.1 h1:viw68GYFjabqZRfXQC+wZOS3pWWFr5fO9yv80Wvh
 github.com/coreservice-io/log v0.2.1/go.mod h1:6N+Mb37FwcMaINQEdog2eBS6rKKQ64CgIlhFkuc5WAs=
 github.com/coreservice-io/logrus_log v0.2.1 h1:ogvRjaWiB232kI21QQQvnolUykIiYASz7br1eNTHQLQ=
 github.com/coreservice-io/logrus_log v0.2.1/go.mod h1:aJntGSPFYkbDQ8OPHgF9l+AO0V1HlG41MqvnOSSF45c=
-github.com/coreservice-io/package_client v0.4.0 h1:atzGz33OcHfjU4K/EBD74LPJxQbhmvpEMtoe8upx9NY=
-github.com/coreservice-io/package_client v0.4.0/go.mod h1:cw912J0W9BH+iY5A7thCjNEsjesspp/9xjXz+4FXKzY=
+github.com/coreservice-io/package_client v0.5.0 h1:zGKrPXYYqycLgMWOi5mzDuN4s0/5G7eW0U/LOTmO06U=
+github.com/coreservice-io/package_client v0.5.0/go.mod h1:cw912J0W9BH+iY5A7thCjNEsjesspp/9xjXz+4FXKzY=
 github.com/coreservice-io/redis_spr v0.1.30 h1:8xPZUtBFOMsdgoPuuQ3wuVPNYIqesxCj0K2uRGiKOLI=
 github.com/coreservice-io/redis_spr v0.1.30/go.mod h1:aqN5LsNLNJIdnkc/cYorN3To+6sm6Oa2AdPSPAtmC+Q=
 github.com/coreservice-io/reference v0.0.12 h1:BMfLBADmdtMxzTT2FumuEaYh723C7D8ANLy9M9yzQEU=
