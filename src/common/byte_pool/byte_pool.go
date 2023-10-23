@@ -6,9 +6,9 @@ import (
 )
 
 type BytePool struct {
-	name         string
-	sync_p       sync.Pool
-	content_size int
+	name      string
+	sync_p    sync.Pool
+	page_size int
 }
 
 type BytePage struct {
@@ -18,6 +18,15 @@ type BytePage struct {
 
 func (bp *BytePage) Recycle() {
 	bp.byte_pool.sync_p.Put(bp.content)
+}
+
+// return nil if size > page_size
+func (bp *BytePage) GetBytes(size int) []byte {
+	if size <= bp.byte_pool.page_size {
+		return bp.content[:size]
+	} else {
+		return nil
+	}
 }
 
 var all_pools = make(map[string]*BytePool)
@@ -33,8 +42,8 @@ func NewBytePool(p_name string, size int) (*BytePool, error) {
 	}
 
 	all_pools[p_name] = &BytePool{
-		name:         p_name,
-		content_size: size,
+		name:      p_name,
+		page_size: size,
 		sync_p: sync.Pool{
 			New: func() interface{} {
 				buff_ := make([]byte, size)
