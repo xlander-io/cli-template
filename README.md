@@ -19,7 +19,7 @@
 
 > step1. config your project 
 - 1. check folder 'root_conf' where you can put different {config_name}.toml files
-- 2. the 'default.toml' config is used if not explicited configured 
+- 2. the 'default.toml' config is used if not explicitly configured 
 - 3. you can run 'go run ./ config set --https.enable=false' to setup your own config file (generated inside 'user_conf/default.toml' )
 - 3. you can run 'go run ./ config --conf=test set --https.enable=false' to setup your own config file (generated inside 'user_conf/test.toml' )
 - 4. you can also edit user_conf/*.toml files directly without the help of command line

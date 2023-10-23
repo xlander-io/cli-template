@@ -2,20 +2,21 @@ package redis_pipeline
 
 import (
 	"context"
+	"math/rand"
 	"time"
 
 	"github.com/coreservice-io/cli-template/basic"
 	"github.com/coreservice-io/cli-template/plugin/redis_plugin"
 	"github.com/coreservice-io/job"
+
 	"github.com/go-redis/redis/v8"
 )
 
-const exec_count_limit = 100
-const exec_interval_limit_millisec = 2500
-const exec_thread_count = 4
-const cmd_channel_limit = 20000
+const thread_count = 5
+const channel_limit = 6000
 
-var last_exec_time_unixmilli = time.Now().UTC().UnixMilli()
+const cmd_count_limit = 60
+const interval_limit_millisec = 2500
 
 type PipelineCmd struct {
 	Ctx       context.Context
@@ -24,45 +25,92 @@ type PipelineCmd struct {
 	Args      []interface{}
 }
 
-var cmdListChannel = make(chan *PipelineCmd, cmd_channel_limit)
+type PipelineExecutor struct {
+	cmdListChannel           chan *PipelineCmd
+	last_exec_time_unixmilli int64
 
-func ScheduleRedisPipelineExec() {
-	const jobName = "ScheduleRedisPipelineExec"
+	exec_count_limit             int
+	exec_interval_limit_millisec int64
+	cmd_channel_limit            int
+}
 
-	for i := 0; i < exec_thread_count; i++ {
-		job.Start(context.Background(), job.JobConfig{
-			Name:          jobName,
-			Job_type:      job.TYPE_PANIC_REDO,
-			Interval_secs: 1,
-			Process_fn: func(j *job.Job) {
-				for {
-					if len(cmdListChannel) < 100 && time.Now().UTC().UnixMilli()-last_exec_time_unixmilli < exec_interval_limit_millisec {
-						time.Sleep(250 * time.Millisecond)
-						continue
-					}
-					exec()
-				}
-			},
-			On_panic: func(job *job.Job, panic_err interface{}) {
-				basic.Logger.Errorln(panic_err)
-			},
-		}, nil)
+var pipelineExecutors []*PipelineExecutor = []*PipelineExecutor{}
+
+func InitPipelineExecutors() {
+	for {
+		if len(pipelineExecutors) >= thread_count {
+			break
+		}
+
+		pe := &PipelineExecutor{
+			cmdListChannel:           make(chan *PipelineCmd, channel_limit),
+			last_exec_time_unixmilli: time.Now().UTC().UnixMilli(),
+
+			exec_count_limit:             cmd_count_limit,
+			exec_interval_limit_millisec: interval_limit_millisec,
+			cmd_channel_limit:            channel_limit,
+		}
+		if err := pe.startPipelineExec(); err == nil {
+			pipelineExecutors = append(pipelineExecutors, pe)
+		}
 	}
 }
 
-func exec() {
+func GetPipeline() *PipelineExecutor {
+	return pipelineExecutors[rand.Intn(thread_count)]
+}
 
-	last_exec_time_unixmilli = time.Now().UTC().UnixMilli()
+func (pe *PipelineExecutor) startPipelineExec() error {
+	const jobName = "ScheduleRedisPipelineExec"
+	err := job.Start(
+		context.Background(),
+		job.JobConfig{
+			Name:                jobName,
+			Job_type:            job.TYPE_PANIC_REDO,
+			Interval_secs:       1,
+			Chk_before_start_fn: nil,
+			Process_fn: func(j *job.Job) {
+				for {
+					if len(pe.cmdListChannel) < pe.exec_count_limit && time.Now().UTC().UnixMilli()-pe.last_exec_time_unixmilli < pe.exec_interval_limit_millisec {
+						time.Sleep(250 * time.Millisecond)
+						continue
+					}
+					pe.exec()
+				}
+			},
+			On_panic: func(j *job.Job, panic_err interface{}) {
+				basic.Logger.Errorln(jobName, panic_err)
+			},
+			Panic_sleep_secs: 1,
+			Final_fn:         nil,
+		},
+		nil,
+	)
+	if err != nil {
+		basic.Logger.Errorln("ScheduleRedisPipelineExec start err:", err)
+		return err
+	}
+	return nil
+}
+
+func (pe *PipelineExecutor) exec() {
+
+	pe.last_exec_time_unixmilli = time.Now().UTC().UnixMilli()
 
 	pl := redis_plugin.GetInstance().Pipeline()
 
 outLoop:
-	for i := 0; i < exec_count_limit; i++ {
+	for i := 0; i < pe.exec_count_limit; i++ {
 		select {
-		case cmd := <-cmdListChannel:
+		case cmd := <-pe.cmdListChannel:
 			switch cmd.Operation {
 			case operation_Set:
 				pl.Set(cmd.Ctx, cmd.Key, cmd.Args[0], cmd.Args[1].(time.Duration))
+
+			case operation_ZRem:
+				z := []interface{}{}
+				z = append(z, cmd.Args...)
+				pl.ZRem(cmd.Ctx, cmd.Key, z...)
 
 			case operation_ZAdd:
 				z := []*redis.Z{}
@@ -87,6 +135,21 @@ outLoop:
 			case operation_ZRemRangeByScore:
 				pl.ZRemRangeByScore(cmd.Ctx, cmd.Key, cmd.Args[0].(string), cmd.Args[1].(string))
 
+			case operation_HIncrBy:
+				pl.HIncrBy(cmd.Ctx, cmd.Key, cmd.Args[0].(string), cmd.Args[1].(int64))
+
+			case operation_HIncrByFloat:
+				pl.HIncrByFloat(cmd.Ctx, cmd.Key, cmd.Args[0].(string), cmd.Args[1].(float64))
+
+			case operation_IncrByFloat:
+				pl.IncrByFloat(cmd.Ctx, cmd.Key, cmd.Args[0].(float64))
+
+			case operation_ZIncrBy:
+				pl.ZIncrBy(cmd.Ctx, cmd.Key, cmd.Args[0].(float64), cmd.Args[1].(string))
+
+			case operation_SAdd:
+				pl.SAdd(cmd.Ctx, cmd.Key, cmd.Args...)
+
 			default:
 				basic.Logger.Errorln("unsupported cmd:", cmd.Operation)
 			}
@@ -103,7 +166,7 @@ outLoop:
 	_, err := pl.Exec(context.Background())
 	if err != nil {
 		basic.Logger.Errorln("exec pipeline error:", err)
-		time.Sleep(5 * time.Second) //sleep a while for exe err
+		time.Sleep(5 * time.Second) // sleep a while for exe err
 		return
 	}
 }
