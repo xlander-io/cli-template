@@ -20,12 +20,16 @@ func (bp *BytePage) Recycle() {
 	bp.byte_pool.sync_p.Put(bp.content)
 }
 
+func (bp *BytePage) GetBytes() []byte {
+	return bp.content
+}
+
 // return nil if size > page_size
-func (bp *BytePage) GetBytes(size int) []byte {
-	if size <= bp.byte_pool.page_size {
-		return bp.content[:size]
-	} else {
+func (bp *BytePage) GetBytesWithSize(size int) []byte {
+	if size <= 0 || size > bp.byte_pool.page_size {
 		return nil
+	} else {
+		return bp.content[:size]
 	}
 }
 
