@@ -34,12 +34,12 @@ func (bp *BytePage) GetBytesWithSize(size int) []byte {
 }
 
 var all_pools = make(map[string]*BytePool)
+var new_pool_lock sync.Mutex
 
-func NewBytePool(p_name string, size int) (*BytePool, error) {
+func NewPool(p_name string, size int) (*BytePool, error) {
 
-	var new_lock sync.Mutex
-	new_lock.Lock()
-	defer new_lock.Unlock()
+	new_pool_lock.Lock()
+	defer new_pool_lock.Unlock()
 
 	if all_pools[p_name] != nil {
 		return nil, errors.New("NewBytePool pool already exist err")
